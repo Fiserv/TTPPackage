@@ -136,8 +136,8 @@ We've prepared an end-to-end sample app to get you up and running fast. [Get the
 ​
 ## Additional Resources
 ​
-[Sample App](hhttps://github.com/Fiserv/TTPSampleApp)
+[Sample App](https://github.com/Fiserv/TTPSampleApp)  
+
+​[Merchant FAQ's from Apple](https://register.apple.com/tap-to-pay-on-iphone/faq)​  
 ​
-[Merchant FAQ's from Apple](https://register.apple.com/tap-to-pay-on-iphone/faq)
-​
-[Tap to Pay on iPhone Security from Apple](https://support.apple.com/guide/security/tap-to-pay-on-iphone-sec72cb155f4/web)
+​[Tap to Pay on iPhone Security from Apple](https://support.apple.com/guide/security/tap-to-pay-on-iphone-sec72cb155f4/web)

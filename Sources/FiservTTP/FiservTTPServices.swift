@@ -34,6 +34,7 @@ import ProximityReader
  */
 public enum FiservTTPEnvironment {
     case Sandbox
+    case Cat
     case Production
 }
 
@@ -102,6 +103,8 @@ internal struct FiservTTPEndpoint {
         switch self.fsconfig.environment {
         case .Sandbox:
             return "cert.api.fiservapps.com"
+        case .Cat:
+            return "cat.api.fiservapps.com"
         case .Production:
             return "prod.api.fiservapps.com"
         }
