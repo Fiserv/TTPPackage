@@ -227,154 +227,154 @@ public struct FiservTTPServerErrorError: Codable {
 }
 
 public struct FiservTTPChargeResponse: Codable {
-    public let gatewayResponse: FiservTTPChargeResponseGatewayResponse
-    public let source: FiservTTPChargeResponseSource
-    public let paymentReceipt: FiservTTPChargeResponsePaymentReceipt
-    public let transactionDetails: FiservTTPChargeResponseTransactionDetails
-    public let transactionInteraction: FiservTTPChargeResponseTransactionInteraction
-    public let merchantDetails: FiservTTPChargeResponseMerchantDetails
-    public let networkDetails: FiservTTPChargeResponseNetworkDetails
-    public let cardDetails: FiservTTPChargeResponseCardDetails
+    public let gatewayResponse: FiservTTPChargeResponseGatewayResponse?
+    public let source: FiservTTPChargeResponseSource?
+    public let paymentReceipt: FiservTTPChargeResponsePaymentReceipt?
+    public let transactionDetails: FiservTTPChargeResponseTransactionDetails?
+    public let transactionInteraction: FiservTTPChargeResponseTransactionInteraction?
+    public let merchantDetails: FiservTTPChargeResponseMerchantDetails?
+    public let networkDetails: FiservTTPChargeResponseNetworkDetails?
+    public let cardDetails: FiservTTPChargeResponseCardDetails?
 }
 
 public struct FiservTTPChargeResponseGatewayResponse: Codable {
-    public let transactionType: String
-    public let transactionState: String
+    public let transactionType: String?
+    public let transactionState: String?
     public let transactionOrigin: String?
-    public let transactionProcessingDetails: FiservTTPChargeResponseTransactionProcessingDetails
+    public let transactionProcessingDetails: FiservTTPChargeResponseTransactionProcessingDetails?
 }
 
 public struct FiservTTPChargeResponseTransactionProcessingDetails: Codable {
     public let orderId: String?
-    public let transactionTimestamp: String
-    public let apiTraceId: String
-    public let clientRequestId: String
-    public let transactionId: String
+    public let transactionTimestamp: String?
+    public let apiTraceId: String?
+    public let clientRequestId: String?
+    public let transactionId: String?
 }
 
 public struct FiservTTPChargeResponseSource: Codable {
-    public let sourceType: String
-    public let card: FiservTTPChargeResponseCard
-    public let emvData: String? // AMX
+    public let sourceType: String?
+    public let card: FiservTTPChargeResponseCard?
+    public let emvData: String?
 }
 
 public struct FiservTTPChargeResponseCard: Codable {
-    public let expirationMonth: String
-    public let expirationYear: String
-    public let bin: String
-    public let last4: String
-    public let scheme: String
+    public let expirationMonth: String?
+    public let expirationYear: String?
+    public let bin: String?
+    public let last4: String?
+    public let scheme: String?
 }
 
 public struct FiservTTPChargeResponsePaymentReceipt: Codable {
-    public let approvedAmount: FiservTTPChargeResponseApprovedAmount
-    public let processorResponseDetails: FiservTTPChargeResponseProcessorResponseDetails
+    public let approvedAmount: FiservTTPChargeResponseApprovedAmount?
+    public let processorResponseDetails: FiservTTPChargeResponseProcessorResponseDetails?
 }
 
 public struct FiservTTPChargeResponseApprovedAmount: Codable {
-    public let total: Decimal
-    public let currency: String
+    public let total: Decimal?
+    public let currency: String?
 }
 
 public struct FiservTTPChargeResponseProcessorResponseDetails: Codable {
-    public let approvalStatus: String
+    public let approvalStatus: String?
     public let approvalCode: String?
-    public let referenceNumber: String
-    public let processor: String
-    public let host: String
-    public let networkRouted: String? // AMX
-    public let networkInternationalId: String
-    public let responseCode: String
-    public let responseMessage: String
-    public let hostResponseCode: String
-    public let hostResponseMessage: String
-    public let responseIndicators: FiservTTPChargeResponseProcessorResponseIndicators? // AMX
-    public let bankAssociationDetails: FiservTTPChargeResponseBankAssociationDetails
-    public let additionalInfo: [FiservTTPChargeResponseAdditionalInfo]
+    public let referenceNumber: String?
+    public let processor: String?
+    public let host: String?
+    public let networkRouted: String?
+    public let networkInternationalId: String?
+    public let responseCode: String?
+    public let responseMessage: String?
+    public let hostResponseCode: String?
+    public let hostResponseMessage: String?
+    public let responseIndicators: FiservTTPChargeResponseProcessorResponseIndicators?
+    public let bankAssociationDetails: FiservTTPChargeResponseBankAssociationDetails?
+    public let additionalInfo: [FiservTTPChargeResponseAdditionalInfo]?
 }
 
 public struct FiservTTPChargeResponseProcessorResponseIndicators: Codable {
-    public let alternateRouteDebitIndicator: Bool
-    public let signatureLineIndicator: Bool
-    public let signatureDebitRouteIndicator: Bool
+    public let alternateRouteDebitIndicator: Bool?
+    public let signatureLineIndicator: Bool?
+    public let signatureDebitRouteIndicator: Bool?
 }
 
 public struct FiservTTPChargeResponseBankAssociationDetails: Codable {
-    public let associationResponseCode: String
+    public let associationResponseCode: String?
 }
 
 public struct FiservTTPChargeResponseAdditionalInfo: Codable {
-    public let name: String
-    public let value: String
+    public let name: String?
+    public let value: String?
 }
 
 public struct FiservTTPChargeResponseTransactionDetails: Codable {
-    public let captureFlag: Bool
-    public let transactionCaptureType: String
+    public let captureFlag: Bool?
+    public let transactionCaptureType: String?
     public let authentication3DS: Bool?
-    public let processingCode: String
-    public let merchantTransactionId: String
-    public let merchantOrderId: String
-    public let createToken: Bool
-    public let retrievalReferenceNumber: String
+    public let processingCode: String?
+    public let merchantTransactionId: String?
+    public let merchantOrderId: String?
+    public let createToken: Bool?
+    public let retrievalReferenceNumber: String?
 }
 
 public struct FiservTTPChargeResponseTransactionInteraction: Codable {
-    public let posEntryMode: String
-    public let posConditionCode: String
-    public let additionalPosInformation: FiservTTPChargeResponseAdditionalPosInformation
-    public let authorizationCharacteristicsIndicator: String? // AMX
-    public let hostPosEntryMode: String
-    public let hostPosConditionCode: String
+    public let posEntryMode: String?
+    public let posConditionCode: String?
+    public let additionalPosInformation: FiservTTPChargeResponseAdditionalPosInformation?
+    public let authorizationCharacteristicsIndicator: String?
+    public let hostPosEntryMode: String?
+    public let hostPosConditionCode: String?
 }
 
 public struct FiservTTPChargeResponseAdditionalPosInformation: Codable {
-    public let stan: String
-    public let dataEntrySource: String
-    public let posFeatures: FiservTTPChargeResponsePosFeatures
+    public let stan: String?
+    public let dataEntrySource: String?
+    public let posFeatures: FiservTTPChargeResponsePosFeatures?
 }
 
 public struct FiservTTPChargeResponsePosFeatures: Codable {
-    public let pinAuthenticationCapability: String
-    public let terminalEntryCapability: String
+    public let pinAuthenticationCapability: String?
+    public let terminalEntryCapability: String?
 }
 
 public struct FiservTTPChargeResponseMerchantDetails: Codable {
-    public let tokenType: String
-    public let terminalId: String
-    public let merchantId: String
+    public let tokenType: String?
+    public let terminalId: String?
+    public let merchantId: String?
 }
 
 public struct FiservTTPChargeResponseNetworkDetails: Codable {
-    public let network: FiservTTPChargeResponseNetwork
-    public let networkResponseCode: String
-    public let cardLevelResultCode: String? // AMX
-    public let validationCode: String? // AMX
-    public let transactionIdentifier: String
+    public let network: FiservTTPChargeResponseNetwork?
+    public let networkResponseCode: String?
+    public let cardLevelResultCode: String?
+    public let validationCode: String?
+    public let transactionIdentifier: String?
 }
 
 public struct FiservTTPChargeResponseNetwork: Codable {
-    public let network: String
-    public let cardAuthenticationResultCode: String? // AMX
+    public let network: String?
+    public let cardAuthenticationResultCode: String?
 }
 
 public struct FiservTTPChargeResponseCardDetails: Codable {
-    public let recordType: String
-    public let lowBin: String
-    public let highBin: String
-    public let binLength: String
-    public let binDetailPan: String
+    public let recordType: String?
+    public let lowBin: String?
+    public let highBin: String?
+    public let binLength: String?
+    public let binDetailPan: String?
     public let issuerBankName: String?
-    public let countryCode: String? // AMX
-    public let detailedCardProduct: String
-    public let detailedCardIndicator: String
-    public let pinSignatureCapability: String
-    public let issuerUpdateYear: String
-    public let issuerUpdateMonth: String
-    public let issuerUpdateDay: String
+    public let countryCode: String?
+    public let detailedCardProduct: String?
+    public let detailedCardIndicator: String?
+    public let pinSignatureCapability: String?
+    public let issuerUpdateYear: String?
+    public let issuerUpdateMonth: String?
+    public let issuerUpdateDay: String?
     public let regulatorIndicator: String?
-    public let cardClass: String? // AMX
-    public let debitPinlessIndicator: [FiservTTPChargeResponseDebitPinlessIndicator]? // AMX
+    public let cardClass: String?
+    public let debitPinlessIndicator: [FiservTTPChargeResponseDebitPinlessIndicator]?
     public let nonMoneyTransferOCTsDomestic: String?
     public let nonMoneyTransferOCTsCrossBorder: String?
     public let onlineGamblingOCTsDomestic: String?
@@ -387,13 +387,13 @@ public struct FiservTTPChargeResponseCardDetails: Codable {
     public let fastFundsCrossBorderNonMoneyTransfer: String?
     public let fastFundsDomesticGambling: String?
     public let fastFundsCrossBorderGambling: String?
-    public let productId: String? // AMX
-    public let accountFundSource: String
-    public let panLengthMin: String
-    public let panLengthMax: String
+    public let productId: String?
+    public let accountFundSource: String?
+    public let panLengthMin: String?
+    public let panLengthMax: String?
 }
 
 public struct FiservTTPChargeResponseDebitPinlessIndicator: Codable {
-    public let debitNetworkId: String
-    public let pinnedPOS: String
+    public let debitNetworkId: String?
+    public let pinnedPOS: String?
 }
