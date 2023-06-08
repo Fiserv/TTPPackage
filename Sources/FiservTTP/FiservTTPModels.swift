@@ -42,10 +42,12 @@ public struct FiservTTPErrorWrapper: Identifiable {
 
 public struct FiservTTPResponseWrapper: Identifiable {
     public let id: UUID
+    public let title: String
     public let response: FiservTTPChargeResponse
     
-    public init(id: UUID = UUID(), response: FiservTTPChargeResponse) {
+    public init(id: UUID = UUID(), title: String, response: FiservTTPChargeResponse) {
         self.id = id
+        self.title = title
         self.response = response
     }
 }
@@ -199,6 +201,56 @@ internal struct FiservTTPChargeRequest: Codable {
     let merchantDetails: FiservTTPMerchantDetails
     let additionalDataCommon: FiservTTPChargeRequestAdditionalDataCommon
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// VOID REQUEST AND RESPONSE MODEL
+
+internal struct FiservTTPVoidRequestAmount: Codable {
+    let total: Decimal
+    let currency: String
+}
+
+internal struct FiservTTPVoidMerchantDetails: Codable {
+    let terminalId: String
+    let merchantId: String
+}
+
+internal struct FiservTTPVoidReferenceTransactionDetails: Codable {
+    let referenceTransactionId: String
+    let referenceTransactionType: String
+}
+
+internal struct FiservTTPVoidRequest: Codable {
+    let referenceTransactionDetails: FiservTTPVoidReferenceTransactionDetails
+    let amount: FiservTTPVoidRequestAmount
+    let merchantDetails: FiservTTPVoidMerchantDetails
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// REFUND REQUEST AND RESPONSE MODEL
+
+internal struct FiservTTPRefundRequestAmount: Codable {
+    let total: Decimal
+    let currency: String
+}
+
+internal struct FiservTTPRefundMerchantDetails: Codable {
+    let terminalId: String
+    let merchantId: String
+}
+
+internal struct FiservTTPRefundReferenceTransactionDetails: Codable {
+    let referenceTransactionId: String
+    let referenceTransactionType: String
+}
+
+internal struct FiservTTPRefundRequest: Codable {
+    let referenceTransactionDetails: FiservTTPRefundReferenceTransactionDetails
+    let amount: FiservTTPRefundRequestAmount
+    let merchantDetails: FiservTTPRefundMerchantDetails
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 public struct FiservTTPServerError: Codable {
     public let gatewayResponse: FiservTTPServerErrorGatewayResponse

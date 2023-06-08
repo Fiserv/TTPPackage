@@ -248,4 +248,54 @@ public class FiservTTPCardReader {
                                            localizedDescription: error.localizedDescription)
         }
     }
+    
+    public func voidTransaction(amount: Decimal, transactionId: String) async throws -> FiservTTPChargeResponse {
+        
+        let title = "Void Transaction"
+        
+        let voidResult = await services.void(referenceTransactionId: transactionId,
+                                             referenceTransactionType: "CHARGES",
+                                             total: amount,
+                                             currencyCode: "USD",
+                                             terminalId: configuration.terminalId,
+                                             merchantId: configuration.merchantId)
+        
+        switch voidResult {
+            
+        case .success(let response):
+            
+            return response
+        
+        case .failure(let err):
+            
+            throw FiservTTPCardReaderError(title: title,
+                                           localizedDescription: err.localizedDescription,
+                                           failureReason: err.failureReason)
+        }
+    }
+    
+    public func refundTransaction(amount: Decimal, transactionId: String) async throws -> FiservTTPChargeResponse {
+        
+        let title = "Refund Transaction"
+        
+        let refundResult = await services.refund(referenceTransactionId: transactionId,
+                                                 referenceTransactionType: "CHARGES",
+                                                 total: amount,
+                                                 currencyCode: "USD",
+                                                 terminalId: configuration.terminalId,
+                                                 merchantId: configuration.merchantId)
+        
+        switch refundResult {
+            
+        case .success(let response):
+            
+            return response
+        
+        case .failure(let err):
+            
+            throw FiservTTPCardReaderError(title: title,
+                                           localizedDescription: err.localizedDescription,
+                                           failureReason: err.failureReason)
+        }
+    }
 }
