@@ -216,8 +216,23 @@ internal struct FiservTTPVoidMerchantDetails: Codable {
 }
 
 internal struct FiservTTPVoidReferenceTransactionDetails: Codable {
-    let referenceTransactionId: String
+    let referenceTransactionId: String?
+    let referenceOrderId: String?
+    let referenceMerchantTransactionId: String?
+    let referenceMerchantOrderId: String?
     let referenceTransactionType: String
+    
+    internal init(referenceTransactionId: String? = nil,
+                  referenceOrderId: String? = nil,
+                  referenceMerchantTransactionId: String? = nil,
+                  referenceMerchantOrderId: String? = nil,
+                  referenceTransactionType: String) {
+        self.referenceTransactionId = referenceTransactionId
+        self.referenceOrderId = referenceOrderId
+        self.referenceMerchantTransactionId = referenceMerchantTransactionId
+        self.referenceMerchantOrderId = referenceMerchantOrderId
+        self.referenceTransactionType = referenceTransactionType
+    }
 }
 
 internal struct FiservTTPVoidRequest: Codable {
@@ -240,8 +255,23 @@ internal struct FiservTTPRefundMerchantDetails: Codable {
 }
 
 internal struct FiservTTPRefundReferenceTransactionDetails: Codable {
-    let referenceTransactionId: String
+    let referenceTransactionId: String?
+    let referenceOrderId: String?
+    let referenceMerchantTransactionId: String?
+    let referenceMerchantOrderId: String?
     let referenceTransactionType: String
+    
+    internal init(referenceTransactionId: String? = nil,
+                  referenceOrderId: String? = nil,
+                  referenceMerchantTransactionId: String? = nil,
+                  referenceMerchantOrderId: String? = nil,
+                  referenceTransactionType: String) {
+        self.referenceTransactionId = referenceTransactionId
+        self.referenceOrderId = referenceOrderId
+        self.referenceMerchantTransactionId = referenceMerchantTransactionId
+        self.referenceMerchantOrderId = referenceMerchantOrderId
+        self.referenceTransactionType = referenceTransactionType
+    }
 }
 
 internal struct FiservTTPRefundRequest: Codable {

@@ -249,11 +249,18 @@ public class FiservTTPCardReader {
         }
     }
     
-    public func voidTransaction(amount: Decimal, transactionId: String) async throws -> FiservTTPChargeResponse {
+    public func voidTransaction(amount: Decimal,
+                                referenceTransactionId: String? = nil,
+                                referenceOrderId: String? = nil,
+                                referenceMerchantTransactionId: String? = nil,
+                                referenceMerchantOrderId: String? = nil) async throws -> FiservTTPChargeResponse {
         
         let title = "Void Transaction"
         
-        let voidResult = await services.void(referenceTransactionId: transactionId,
+        let voidResult = await services.void(referenceTransactionId: referenceTransactionId,
+                                             referenceOrderId: referenceOrderId,
+                                             referenceMerchantTransactionId: referenceMerchantTransactionId,
+                                             referenceMerchantOrderId: referenceMerchantOrderId,
                                              referenceTransactionType: "CHARGES",
                                              total: amount,
                                              currencyCode: "USD",
@@ -274,11 +281,18 @@ public class FiservTTPCardReader {
         }
     }
     
-    public func refundTransaction(amount: Decimal, transactionId: String) async throws -> FiservTTPChargeResponse {
+    public func refundTransaction(amount: Decimal,
+                                  referenceTransactionId: String? = nil,
+                                  referenceOrderId: String? = nil,
+                                  referenceMerchantTransactionId: String? = nil,
+                                  referenceMerchantOrderId: String? = nil) async throws -> FiservTTPChargeResponse {
         
         let title = "Refund Transaction"
         
-        let refundResult = await services.refund(referenceTransactionId: transactionId,
+        let refundResult = await services.refund(referenceTransactionId: referenceTransactionId,
+                                                 referenceOrderId: referenceOrderId,
+                                                 referenceMerchantTransactionId: referenceMerchantTransactionId,
+                                                 referenceMerchantOrderId: referenceMerchantOrderId,
                                                  referenceTransactionType: "CHARGES",
                                                  total: amount,
                                                  currencyCode: "USD",

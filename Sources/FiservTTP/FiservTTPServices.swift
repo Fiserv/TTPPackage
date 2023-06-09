@@ -193,14 +193,20 @@ protocol FiservTTPServicesProtocol {
                 paymentCardReaderId: String,
                 paymentCardReadResult: PaymentCardReadResult) async -> Result<FiservTTPChargeResponse, FiservTTPRequestError>
     
-    func void(referenceTransactionId: String,
+    func void(referenceTransactionId: String?,
+              referenceOrderId: String?,
+              referenceMerchantTransactionId: String?,
+              referenceMerchantOrderId: String?,
               referenceTransactionType: String,
               total: Decimal,
               currencyCode: String,
               terminalId: String,
               merchantId: String) async -> Result<FiservTTPChargeResponse, FiservTTPRequestError>
     
-    func refund(referenceTransactionId: String,
+    func refund(referenceTransactionId: String?,
+                referenceOrderId: String?,
+                referenceMerchantTransactionId: String?,
+                referenceMerchantOrderId: String?,
                 referenceTransactionType: String,
                 total: Decimal,
                 currencyCode: String,
@@ -266,7 +272,10 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
                                                                 responseModel: FiservTTPChargeResponse.self)
     }
     
-    internal func void(referenceTransactionId: String,
+    internal func void(referenceTransactionId: String? = nil,
+                       referenceOrderId: String? = nil,
+                       referenceMerchantTransactionId: String? = nil,
+                       referenceMerchantOrderId: String? = nil,
                        referenceTransactionType: String,
                        total: Decimal,
                        currencyCode: String,
@@ -275,6 +284,9 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
         
         return await sendRequest(endpoint: voidEndpoint,
                                  httpBody: bodyForVoidRequest(referenceTransactionId: referenceTransactionId,
+                                                                referenceOrderId: referenceOrderId,
+                                                                referenceMerchantTransactionId: referenceMerchantTransactionId,
+                                                                referenceMerchantOrderId: referenceMerchantOrderId,
                                                                 referenceTransactionType: referenceTransactionType,
                                                                 total: total,
                                                                 currencyCode: currencyCode,
@@ -283,7 +295,10 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
                                                                 responseModel: FiservTTPChargeResponse.self)
     }
     
-    internal func refund(referenceTransactionId: String,
+    internal func refund(referenceTransactionId: String? = nil,
+                         referenceOrderId: String? = nil,
+                         referenceMerchantTransactionId: String? = nil,
+                         referenceMerchantOrderId: String? = nil,
                          referenceTransactionType: String,
                          total: Decimal,
                          currencyCode: String,
@@ -293,6 +308,9 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
         
         return await sendRequest(endpoint: refundEndpoint,
                                  httpBody: bodyForRefundRequest(referenceTransactionId: referenceTransactionId,
+                                                                referenceOrderId: referenceOrderId,
+                                                                referenceMerchantTransactionId: referenceMerchantTransactionId,
+                                                                referenceMerchantOrderId: referenceMerchantOrderId,
                                                                 referenceTransactionType: referenceTransactionType,
                                                                 total: total,
                                                                 currencyCode: currencyCode,
@@ -381,7 +399,10 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
         return encoded
     }
     
-    internal func bodyForVoidRequest(referenceTransactionId: String,
+    internal func bodyForVoidRequest(referenceTransactionId: String? = nil,
+                                     referenceOrderId: String? = nil,
+                                     referenceMerchantTransactionId: String? = nil,
+                                     referenceMerchantOrderId: String? = nil,
                                      referenceTransactionType: String,
                                      total: Decimal,
                                      currencyCode: String,
@@ -393,6 +414,9 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
         let voidMerchantDetails = FiservTTPVoidMerchantDetails(terminalId: terminalId, merchantId: merchantId)
         
         let referenceTransactionDetails = FiservTTPVoidReferenceTransactionDetails(referenceTransactionId: referenceTransactionId,
+                                                                                   referenceOrderId: referenceOrderId,
+                                                                                   referenceMerchantTransactionId: referenceMerchantTransactionId,
+                                                                                   referenceMerchantOrderId: referenceMerchantOrderId,
                                                                                    referenceTransactionType: referenceTransactionType)
         
         let voidRequest = FiservTTPVoidRequest(referenceTransactionDetails: referenceTransactionDetails,
@@ -406,7 +430,10 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
         return encoded
     }
     
-    internal func bodyForRefundRequest(referenceTransactionId: String,
+    internal func bodyForRefundRequest(referenceTransactionId: String? = nil,
+                                      referenceOrderId: String? = nil,
+                                      referenceMerchantTransactionId: String? = nil,
+                                      referenceMerchantOrderId: String? = nil,
                                       referenceTransactionType: String,
                                       total: Decimal,
                                       currencyCode: String,
@@ -418,6 +445,9 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
         let refundMerchantDetails = FiservTTPRefundMerchantDetails(terminalId: terminalId, merchantId: merchantId)
         
         let referenceTransactionDetails = FiservTTPRefundReferenceTransactionDetails(referenceTransactionId: referenceTransactionId,
+                                                                                     referenceOrderId: referenceOrderId,
+                                                                                     referenceMerchantTransactionId: referenceMerchantTransactionId,
+                                                                                     referenceMerchantOrderId: referenceMerchantOrderId,
                                                                                      referenceTransactionType: referenceTransactionType)
         
         let refundRequest = FiservTTPRefundRequest(referenceTransactionDetails: referenceTransactionDetails,
