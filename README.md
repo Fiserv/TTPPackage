@@ -130,7 +130,7 @@ do {
     ///TODO handle exception
 }
 ```
-​### Void a Payment
+### Void a Payment
 
 ```Swift
 let amount = 10.99 // amount to void
