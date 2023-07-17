@@ -131,6 +131,36 @@ do {
 }
 ```
 ​
+​### Void a Payment
+​
+​```Swift
+​let amount = 10.99 // amount to void
+​let referenceTransactionId = "this value was returned in the charge response"
+​do {
+​  let voidResponse = try await voidTransaction(
+​      amount:amount,
+​      referenceTransactionId = referenceTransactionId)
+​    ///TODO inspect the voidResponse to see the result   
+} catch let error as FiservTTPCardReaderError {
+    ///TODO handle exception
+}
+​```
+​
+​### Refund a Payment
+​
+​​```Swift
+​let amount = 10.99 // amount to void
+​let referenceTransactionId = "this value was returned in the charge response"
+​do {
+​  let refundResponse = try await refundTransaction(
+​      amount:amount,
+​      referenceTransactionId = referenceTransactionId)
+​    ///TODO inspect the refundResponse to see the result   
+} catch let error as FiservTTPCardReaderError {
+    ///TODO handle exception
+}
+​```
+​
 ## Download the sample app
 We've prepared an end-to-end sample app to get you up and running fast. [Get the Sample App here](https://github.com/Fiserv/TTPSampleApp)
 ​
