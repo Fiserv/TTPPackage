@@ -261,6 +261,12 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
                         merchantTransactionId: String,
                         paymentCardReaderId: String,
                         paymentCardReadResult: PaymentCardReadResult) async -> Result<FiservTTPChargeResponse, FiservTTPRequestError> {
+        
+        guard let generalCardData = removeUnknownTags(generalCardData: paymentCardReadResult.generalCardData),
+              let paymentCardData = paymentCardReadResult.paymentCardData else {
+            
+            return .failure(FiservTTPRequestError(message: "Payment Card data missing or corrupt."))
+        }
 
         return await sendRequest(endpoint: chargeEndpoint,
                                  httpBody: bodyForChargeRequest(amount: amount,
@@ -268,7 +274,9 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
                                                                 merchantOrderId: merchantOrderId,
                                                                 merchantTransactionId: merchantTransactionId,
                                                                 paymentCardReaderId: paymentCardReaderId,
-                                                                paymentCardReadResult: paymentCardReadResult),
+                                                                generalCardData: generalCardData,
+                                                                paymentCardData: paymentCardData,
+                                                                cardReaderTransactionId: paymentCardReadResult.id),
                                                                 responseModel: FiservTTPChargeResponse.self)
     }
     
@@ -345,25 +353,23 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
                                        merchantOrderId: String,
                                        merchantTransactionId: String,
                                        paymentCardReaderId: String,
-                                       paymentCardReadResult: PaymentCardReadResult) -> Data? {
+                                       generalCardData: String,
+                                       paymentCardData: String,
+                                       cardReaderTransactionId: String ) -> Data? {
         
         let amount = FiservTTPChargeRequestAmount(total: amount, currency: currencyCode)
-        
-        guard let generalCardData = paymentCardReadResult.generalCardData, let paymentCardData = paymentCardReadResult.paymentCardData else {
-            return nil
-        }
         
         let source = FiservTTPChargeRequestSource(sourceType: "AppleTapToPay",
                                                   generalCardData: generalCardData,
                                                   paymentCardData: paymentCardData,
                                                   cardReaderId: paymentCardReaderId,
-                                                  cardReaderTransactionId: paymentCardReadResult.id)
+                                                  cardReaderTransactionId: cardReaderTransactionId)
         
         let transactionDetails = FiservTTPChargeRequestTransactionDetails(captureFlag: true,
                                                                           merchantOrderId: merchantOrderId,
                                                                           merchantTransactionId: merchantTransactionId)
 
-        let posFeatures = FiservTTPChargeRequestPosFeatures(pinAuthenticationCapability: "CAN_ACCEPT_PIN",
+        let posFeatures = FiservTTPChargeRequestPosFeatures(pinAuthenticationCapability: "CANNOT_ACCEPT_PIN",
                                                             terminalEntryCapability: "CONTACTLESS")
         
         let dataEntrySource = FiservTTPChargeRequestDataEntrySource(dataEntrySource: "MOBILE_TERMINAL",
@@ -539,6 +545,130 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
             
             return .failure(FiservTTPRequestError(message: "Unknown Error", failureReason: error.localizedDescription))
         }
+    }
+    
+    private func removeUnknownTags(generalCardData: String?) -> String? {
+        
+        guard let generalCardData = generalCardData else { return nil }
+        
+        // Convert General Card Data to a Hexidecimal String
+        guard let generalCardHex = base64ToHex(generalCardData), !generalCardHex.isEmpty else { return nil }
+        
+        do {
+        
+            // Parse the EMV TLV Tags into a Dictionary
+            var tlvDict = try parseTLV(generalCardHex)
+            
+            // Remove these Unknown tags
+            tlvDict.removeValue(forKey:"df8115")
+            tlvDict.removeValue(forKey:"df8129")
+            tlvDict.removeValue(forKey:"df31")
+            
+            // Convert the dictionary back to a string
+            let tlvString = tlvToString(tlvDict)
+            
+            // Convert the tlv string to base64
+            return hexStringToBase64EncodedString(tlvString)
+            
+        } catch(_) {
+            
+            return nil
+        }
+    }
+    
+    private func base64ToHex(_ base64String: String) -> String? {
+        
+        guard let data = Data(base64Encoded: base64String) else {
+            return nil
+        }
+        
+        return data.map { String(format: "%02hhx", $0) }.joined()
+    }
+    
+    private func isMultiByteTag(_ tag: String) throws -> Bool {
+        
+        if let intValue = UInt64(tag, radix: 16) {
+            
+            let binaryRepresentation = String(intValue, radix: 2)
+            
+            return binaryRepresentation.hasSuffix("11111") || (tag.count > 2 && binaryRepresentation.hasSuffix("000001"))
+            
+        } else {
+            throw FiservTTPCardReaderError(title: "Read Payment Card", localizedDescription: NSLocalizedString("Payment Card data missing or corrupt.", comment: ""))
+        }
+    }
+    
+    private func parseTLV(_ data: String) throws -> [String: String] {
+        
+        var index = data.startIndex
+        var tagIndexRef = index
+        var valueIndexRef = index
+        var tlvData = [String: String]()
+
+        while index < data.endIndex {
+
+            // Get the tag - starts with 2 characters, but can be longer
+            var tag = ""
+
+            repeat {
+                let tagPartStart = index
+                let tagPartEnd = data.index(tagPartStart, offsetBy: 2)
+                let tagPart = String(data[tagPartStart..<tagPartEnd])
+                tag += tagPart
+                index = tagPartEnd
+                if index < valueIndexRef { break }
+                valueIndexRef = index
+            } while try isMultiByteTag(tag.lowercased()) && index < data.endIndex  // Continue extending the tag
+
+            // Get the length - next 2 characters
+            let lengthStart = index
+            let lengthEnd = data.index(lengthStart, offsetBy: 2)
+            let length = Int(String(data[lengthStart..<lengthEnd]), radix: 16) ?? 0
+            index = lengthEnd
+            // Get the value - next 'length' characters
+            let valueStart = index
+            let valueEnd = data.index(valueStart, offsetBy: length * 2) // *2 because each byte represented by 2 chars
+            let value = String(data[valueStart..<valueEnd])
+            index = valueEnd
+            tlvData[tag] = value
+            if index < tagIndexRef { break }
+            tagIndexRef = index
+        }
+        return tlvData
+    }
+    
+    func tlvToString(_ tlvDict: [String: String]) -> String {
+        
+        var tlvString : String = ""
+        
+        for (tag, value) in tlvDict {
+            tlvString += tag + String(format: "%02x", value.count/2) + value
+        }
+        
+        return tlvString
+    }
+    
+    func hexStringToBase64EncodedString(_ hexString: String) -> String? {
+        guard let data = hexString.hexToData() else {
+            return nil
+        }
+        return data.base64EncodedString()
+    }
+}
+
+extension String {
+    func hexToData() -> Data? {
+        var hex = self
+        var data = Data()
+        while !hex.isEmpty {
+            let subHex = String(hex.prefix(2))
+            hex = String(hex.dropFirst(2))
+            guard let byte = UInt8(subHex, radix: 16) else {
+                return nil
+            }
+            data.append(byte)
+        }
+        return data
     }
 }
 
