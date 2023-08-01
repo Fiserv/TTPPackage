@@ -563,6 +563,7 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
             tlvDict.removeValue(forKey:"df8115")
             tlvDict.removeValue(forKey:"df8129")
             tlvDict.removeValue(forKey:"df31")
+            tlvDict.removeValue(forKey:"9f7c")
             
             // Convert the dictionary back to a string
             let tlvString = tlvToString(tlvDict)
