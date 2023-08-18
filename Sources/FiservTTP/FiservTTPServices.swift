@@ -109,7 +109,7 @@ internal struct FiservTTPEndpoint {
         case .Cat:
             return "cat.api.fiservapps.com"
         case .Production:
-            return "prod.api.fiservapps.com"
+            return "connect.fiservapis.com"
         }
     }
     
@@ -564,6 +564,8 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
             tlvDict.removeValue(forKey:"df8129")
             tlvDict.removeValue(forKey:"df31")
             tlvDict.removeValue(forKey:"9f7c")
+            tlvDict.removeValue(forKey:"5a")
+            tlvDict.removeValue(forKey:"9f15")
             
             // Convert the dictionary back to a string
             let tlvString = tlvToString(tlvDict)

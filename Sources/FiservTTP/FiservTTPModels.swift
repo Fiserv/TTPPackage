@@ -338,6 +338,7 @@ public struct FiservTTPChargeResponseSource: Codable {
     public let sourceType: String?
     public let card: FiservTTPChargeResponseCard?
     public let emvData: String?
+    public let generalCardData: String?
 }
 
 public struct FiservTTPChargeResponseCard: Codable {

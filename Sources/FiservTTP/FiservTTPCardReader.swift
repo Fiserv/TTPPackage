@@ -216,7 +216,7 @@ public class FiservTTPCardReader {
             
         case .success(let cardReadResult):
             
-            guard let _ = cardReadResult.generalCardData, let _ = cardReadResult.paymentCardData else {
+            guard let generalCardData = cardReadResult.generalCardData, let _ = cardReadResult.paymentCardData else {
             
                 throw FiservTTPCardReaderError(title: title,
                                                localizedDescription: NSLocalizedString("Payment Card data missing or corrupt.", comment: ""))
@@ -233,7 +233,9 @@ public class FiservTTPCardReader {
                 
             case .success(let response):
                 
-                return response
+                let appendedResponse = appGeneralCardData(generalCardData: generalCardData, response: response)
+                
+                return appendedResponse
             
             case .failure(let err):
                 
@@ -311,5 +313,31 @@ public class FiservTTPCardReader {
                                            localizedDescription: err.localizedDescription,
                                            failureReason: err.failureReason)
         }
+    }
+    
+    private func appGeneralCardData(generalCardData: String, response: FiservTTPChargeResponse) -> FiservTTPChargeResponse {
+        
+        let appendedResponse = FiservTTPChargeResponse(gatewayResponse: response.gatewayResponse,
+                                                       source: FiservTTPChargeResponseSource(sourceType: response.source?.sourceType,
+                                                                                             card: response.source?.card,
+                                                                                             emvData: response.source?.emvData,
+                                                                                             generalCardData: base64ToHex(generalCardData)),
+                                                       paymentReceipt: response.paymentReceipt,
+                                                       transactionDetails: response.transactionDetails,
+                                                       transactionInteraction: response.transactionInteraction,
+                                                       merchantDetails: response.merchantDetails,
+                                                       networkDetails: response.networkDetails,
+                                                       cardDetails: response.cardDetails)
+        
+        return appendedResponse
+    }
+    
+    private func base64ToHex(_ base64String: String) -> String? {
+        
+        guard let data = Data(base64Encoded: base64String) else {
+            return nil
+        }
+        
+        return data.map { String(format: "%02hhx", $0) }.joined()
     }
 }
