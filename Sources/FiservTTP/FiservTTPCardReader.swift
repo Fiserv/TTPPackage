@@ -265,9 +265,7 @@ public class FiservTTPCardReader {
                                              referenceMerchantOrderId: referenceMerchantOrderId,
                                              referenceTransactionType: "CHARGES",
                                              total: amount,
-                                             currencyCode: "USD",
-                                             terminalId: configuration.terminalId,
-                                             merchantId: configuration.merchantId)
+                                             currencyCode: "USD")
         
         switch voidResult {
             
@@ -297,9 +295,7 @@ public class FiservTTPCardReader {
                                                  referenceMerchantOrderId: referenceMerchantOrderId,
                                                  referenceTransactionType: "CHARGES",
                                                  total: amount,
-                                                 currencyCode: "USD",
-                                                 terminalId: configuration.terminalId,
-                                                 merchantId: configuration.merchantId)
+                                                 currencyCode: "USD")
         
         switch refundResult {
             

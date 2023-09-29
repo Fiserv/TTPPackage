@@ -54,6 +54,7 @@ let myConfig = FiservTTPConfig(
     apiKey: "<your API key from Developer Studio>",
     environment: .Sandbox,
     currencyCode: "USD",
+    appleTtpMerchantId: "<optional apple ttp merchantId provided by fiserv"
     merchantId: "<your merchantId from the CommerceHub workspace on Developer Studio>",
     merchantName: "<your merchant name as it will be displayed in the Tap to Pay payment sheet>",
     merchantCategoryCode: "<your MCC>",

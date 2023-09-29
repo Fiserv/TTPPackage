@@ -61,6 +61,7 @@ public struct FiservTTPConfig {
     public let environment: FiservTTPEnvironment
     public let currencyCode: String
     public let merchantId: String
+    public let appleTtpMerchantId: String?
     public let merchantName: String
     public let merchantCategoryCode: String
     public let terminalId: String
@@ -74,6 +75,7 @@ public struct FiservTTPConfig {
      - parameter environment:           The destination for network requests (Sandbox or Production)
      - parameter currencyCode:          The Currency Code used for transactions
      - parameter merchantId:            Your MerchantId
+     - parameter appleTtpMerchantId           Your apple TTP MerchantId (Optional)
      - parameter merchantName:          Your Merchant Name
      - parameter merchantCategoryCode:  Your MerchantId Category Code
      - parameter terminalId:            Your TerminalId
@@ -86,6 +88,7 @@ public struct FiservTTPConfig {
                 environment: FiservTTPEnvironment,
                 currencyCode: String,
                 merchantId: String,
+                appleTtpMerchantId: String? = nil,
                 merchantName: String,
                 merchantCategoryCode: String,
                 terminalId: String,
@@ -96,6 +99,7 @@ public struct FiservTTPConfig {
         self.environment = environment
         self.currencyCode = currencyCode
         self.merchantId = merchantId
+        self.appleTtpMerchantId = appleTtpMerchantId
         self.merchantName = merchantName
         self.merchantCategoryCode = merchantCategoryCode
         self.terminalId = terminalId
@@ -122,6 +126,7 @@ internal struct FiservTTPTokenRequest: Codable {
     let accessTokenTimeToLive: Int
     let dynamicDescriptors: FiservTTPDynamicDescriptors
     let merchantDetails: FiservTTPMerchantDetails
+    let appleTtpMerchantId: String?
 }
 
 public struct FiservTTPTokenResponse: Codable {
@@ -153,6 +158,7 @@ internal struct FiservTTPChargeRequestSource: Codable {
     let paymentCardData: String
     let cardReaderId: String
     let cardReaderTransactionId: String
+    let appleTtpMerchantId: String?
 }
 
 internal struct FiservTTPChargeRequestTransactionDetails: Codable {
