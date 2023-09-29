@@ -54,12 +54,12 @@ let myConfig = FiservTTPConfig(
     apiKey: "<your API key from Developer Studio>",
     environment: .Sandbox,
     currencyCode: "USD",
-    appleTtpMerchantId: "<optional apple ttp merchantId provided by fiserv"
+    appleTtpMerchantId: "<optional apple ttp merchantId provided by fiserv>",
     merchantId: "<your merchantId from the CommerceHub workspace on Developer Studio>",
     merchantName: "<your merchant name as it will be displayed in the Tap to Pay payment sheet>",
     merchantCategoryCode: "<your MCC>",
-    terminalId: "10000001",
-    terminalProfileId: "3c00e000-a00e-2043-6d63-936859000002")
+    terminalId: "10000001", /// Identifies the specific device or point of entry where the transaction originated assigned by the acquirer or the gateway
+    terminalProfileId: "3c00e000-a00e-2043-6d63-936859000002") /// Unique identifier for the terminal profile used to configure the kernels of the card reader and manage payment terminal behavior
 ```
 ​
 Now create an instance of `FiservTTPCardReader`, which is the main class that your app will interact with.  Typically you would put this in a view model.
