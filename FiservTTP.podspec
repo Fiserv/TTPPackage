@@ -2,7 +2,6 @@ Pod::Spec.new do |s|
 
   s.name = 'FiservTTP'
   s.version = '0.1.1'
-  s.license = 'MIT'
   s.license = { :type => 'MIT', :file => 'LICENSE' }
   s.summary = 'Tap To Pay on iPhone by Fiserv'
   s.homepage = 'https://github.com/Fiserv/TTPPackage'
