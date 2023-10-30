@@ -365,6 +365,31 @@ public struct FiservTTPChargeResponseApprovedAmount: Codable {
     public let currency: String?
 }
 
+extension LosslessStringConvertible {
+    var string: String { .init(self) }
+}
+
+extension FloatingPoint where Self: LosslessStringConvertible {
+    var decimal: Decimal? { Decimal(string: string) }
+}
+
+extension FiservTTPChargeResponseApprovedAmount {
+
+    enum CodingKeys: String, CodingKey {
+        case total = "total"
+        case currency = "currency"
+    }
+
+    public init(from decoder: Decoder) throws {
+
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        self.total = try container.decode(Double.self, forKey: .total).decimal ?? .zero
+
+        self.currency = try container.decode(String.self, forKey: .currency)
+    }
+}
+
 public struct FiservTTPChargeResponseProcessorResponseDetails: Codable {
     public let approvalStatus: String?
     public let approvalCode: String?

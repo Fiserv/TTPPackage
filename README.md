@@ -117,7 +117,7 @@ Now you're ready to initialize the Apple Proximity Reader by calling:
 
 ```Swift
 do {
-    try await fiservTTPCardReader.activateReader()
+    try await self.fiservTTPCardReader.initializeSession()
 } catch let error as FiservTTPCardReaderError {
     ///TODO handle exception
 }
