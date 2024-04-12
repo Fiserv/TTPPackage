@@ -43,12 +43,14 @@ public struct FiservTTPErrorWrapper: Identifiable {
 public struct FiservTTPResponseWrapper: Identifiable {
     public let id: UUID
     public let title: String
-    public let response: FiservTTPChargeResponse
+    public let response: FiservTTPChargeResponse?
+    public let responses: [FiservTTPChargeResponse]?
     
-    public init(id: UUID = UUID(), title: String, response: FiservTTPChargeResponse) {
+    public init(id: UUID = UUID(), title: String, response: FiservTTPChargeResponse? = nil, responses: [FiservTTPChargeResponse]? = nil) {
         self.id = id
         self.title = title
         self.response = response
+        self.responses = responses
     }
 }
 
@@ -145,6 +147,58 @@ public struct FiservTTPValidateCardResponse: Codable {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// INQUIRY REQUEST MODEL
+
+internal struct FiservTTPInquiryReferenceTransactionDetails: Codable {
+    
+    let referenceTransactionId: String?
+    let referenceMerchantTransactionId: String?
+    let referenceMerchantOrderId: String?
+    let referenceOrderId: String?
+    let referenceClientRequestId: String?
+    
+    internal init(referenceTransactionId: String? = nil,
+                  referenceMerchantTransactionId: String? = nil,
+                  referenceMerchantOrderId: String? = nil,
+                  referenceOrderId: String? = nil,
+                  referenceClientRequestId: String? = nil) {
+        
+        self.referenceTransactionId = referenceTransactionId
+        self.referenceMerchantTransactionId = referenceMerchantTransactionId
+        self.referenceMerchantOrderId = referenceMerchantOrderId
+        self.referenceOrderId = referenceOrderId
+        self.referenceClientRequestId = referenceClientRequestId
+    }
+}
+
+internal struct FiservTTPInquiryMerchantDetails: Codable {
+    
+    let tokenType: String?
+    let storeId: String?
+    let siteId: String?
+    let terminalId: String?
+    let merchantId: String?
+    
+    internal init(tokenType: String? = nil,
+                  storeId: String? = nil,
+                  siteId: String? = nil,
+                  terminalId: String? = nil,
+                  merchantId: String? = nil) {
+        
+        self.tokenType = tokenType
+        self.storeId = storeId
+        self.siteId = siteId
+        self.terminalId = terminalId
+        self.merchantId = merchantId
+    }
+}
+
+internal struct FiservTTPInquiryRequest: Codable {
+    let referenceTransactionDetails: FiservTTPInquiryReferenceTransactionDetails
+    let merchantDetails: FiservTTPInquiryMerchantDetails
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // CHARGES REQUEST AND RESPONSE MODEL
 
 internal struct FiservTTPChargeRequestAmount: Codable {
@@ -223,20 +277,14 @@ internal struct FiservTTPVoidMerchantDetails: Codable {
 
 internal struct FiservTTPVoidReferenceTransactionDetails: Codable {
     let referenceTransactionId: String?
-    let referenceOrderId: String?
     let referenceMerchantTransactionId: String?
-    let referenceMerchantOrderId: String?
     let referenceTransactionType: String
     
     internal init(referenceTransactionId: String? = nil,
-                  referenceOrderId: String? = nil,
                   referenceMerchantTransactionId: String? = nil,
-                  referenceMerchantOrderId: String? = nil,
                   referenceTransactionType: String) {
         self.referenceTransactionId = referenceTransactionId
-        self.referenceOrderId = referenceOrderId
         self.referenceMerchantTransactionId = referenceMerchantTransactionId
-        self.referenceMerchantOrderId = referenceMerchantOrderId
         self.referenceTransactionType = referenceTransactionType
     }
 }
@@ -262,20 +310,14 @@ internal struct FiservTTPRefundMerchantDetails: Codable {
 
 internal struct FiservTTPRefundReferenceTransactionDetails: Codable {
     let referenceTransactionId: String?
-    let referenceOrderId: String?
     let referenceMerchantTransactionId: String?
-    let referenceMerchantOrderId: String?
     let referenceTransactionType: String
     
     internal init(referenceTransactionId: String? = nil,
-                  referenceOrderId: String? = nil,
                   referenceMerchantTransactionId: String? = nil,
-                  referenceMerchantOrderId: String? = nil,
                   referenceTransactionType: String) {
         self.referenceTransactionId = referenceTransactionId
-        self.referenceOrderId = referenceOrderId
         self.referenceMerchantTransactionId = referenceMerchantTransactionId
-        self.referenceMerchantOrderId = referenceMerchantOrderId
         self.referenceTransactionType = referenceTransactionType
     }
 }
@@ -284,6 +326,70 @@ internal struct FiservTTPRefundRequest: Codable {
     let referenceTransactionDetails: FiservTTPRefundReferenceTransactionDetails
     let amount: FiservTTPRefundRequestAmount
     let merchantDetails: FiservTTPRefundMerchantDetails
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// REFUND CARD REQUEST AND RESPONSE MODEL
+
+internal struct FiservTTPRefundCardRequestAmount: Codable {
+    let total: Decimal
+    let currency: String
+}
+
+internal struct FiservTTPRefundCardRequestMerchantDetails: Codable {
+    let merchantId: String
+    let terminalId: String
+}
+
+internal struct FiservTTPRefundCardRequestSource: Codable {
+    let sourceType: String
+    let generalCardData: String
+    let paymentCardData: String
+    let cardReaderId: String
+    let cardReaderTransactionId: String
+    let appleTtpMerchantId: String?
+}
+
+internal struct FiservTTPRefundCardRequestPosFeatures: Codable {
+    let pinAuthenticationCapability: String
+    let terminalEntryCapability: String
+}
+
+
+internal struct FiservTTPRefundCardRequestAdditionalDataCommon: Codable {
+    let origin: FiservTTPRefundCardRequestAdditionalDataCommonProcessors
+}
+
+internal struct FiservTTPRefundCardRequestAdditionalDataCommonProcessors: Codable {
+    let processors: FiservTTPRefundCardRequestAdditionalDataCommonProcessor
+}
+
+internal struct FiservTTPRefundCardRequestAdditionalDataCommonProcessor: Codable {
+    let processorName: String
+    let processingPlatform: String
+    let settlementPlatform: String
+    let priority: String
+}
+
+internal struct FiservTTPRefundCardRequestDataEntrySource: Codable {
+    let dataEntrySource: String
+    let posFeatures: FiservTTPRefundCardRequestPosFeatures
+}
+
+internal struct FiservTTPRefundCardRequestTransactionInteraction: Codable {
+    let origin: String
+    let posEntryMode: String
+    let posConditionCode: String
+    let additionalPosInformation: FiservTTPRefundCardRequestDataEntrySource
+}
+
+internal struct FiservTTPRefundCardRequest: Codable {
+    let amount: FiservTTPRefundCardRequestAmount
+    let source: FiservTTPRefundCardRequestSource
+    let referenceTransactionDetails: FiservTTPRefundReferenceTransactionDetails?
+    let transactionInteraction: FiservTTPRefundCardRequestTransactionInteraction
+    let merchantDetails: FiservTTPRefundCardRequestMerchantDetails
+    let additionalDataCommon: FiservTTPRefundCardRequestAdditionalDataCommon
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -323,6 +429,7 @@ public struct FiservTTPChargeResponse: Codable {
     public let merchantDetails: FiservTTPChargeResponseMerchantDetails?
     public let networkDetails: FiservTTPChargeResponseNetworkDetails?
     public let cardDetails: FiservTTPChargeResponseCardDetails?
+    public let error: [FiservTTPServerErrorError]?
 }
 
 public struct FiservTTPChargeResponseGatewayResponse: Codable {

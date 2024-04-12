@@ -84,22 +84,27 @@ Early in the startup process of your app, call the following method to validate 
 
 ```Swift
 if !fiservTTPCardReader.readerIsSupported() {
-    ///TODO handle unsupported device
+    // TODO handle unsupported device
 }
 ```
 
 ### Obtain PSP Token
+
 You must obtain a session token in order to utilize the SDK.  Acquire the token by making this call:
 
 ```Swift
 do {
     try await fiservTTPCardReader.requestSessionToken()
 } catch let error as FiservTTPCardReaderError {
-    ///TODO handle exception
+    // TODO handle exception
 }
 ```
 
-Note that the session token will expire in 24 hours.  You are responsible for keeping track of when to obtain a new token.
+Note that the session token has a time to live of 48 hours. However, we have included an **auto-refresh feature** that will request a new token for you when the TTL value is 30 minutes or less. Moving the app from the background to the foreground, as well as unlocking (a locked iPhone) will trigger this check and the refresh will occur based on the time remaining of the token. 
+
+Additional information can be found here:
+
+[Commerce Hub Security](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Security/Credentials.md&branch=main#endpoint)
 
 ### Link Account
 Next you must link the device running the app to an Apple ID. This needs to happen **just once**.  You are responsible for tracking whether the linking process has occurred already or not.  If not, then perform linking by making this call:
@@ -108,24 +113,39 @@ Next you must link the device running the app to an Apple ID. This needs to happ
 do {
     try await fiservTTPCardReader.linkAcount()
 } catch let error as FiservTTPCardReaderError {
-    ///TODO handle exception
+    // TODO handle exception
 }
 ```
+
+### Is Account Linked
+When targeting iOS 16.4 or greater, the option to check if the account is already linked is available.
+
+```Swift
+do {
+    let isLinked = try await fiservTTPCardReader.isAccountLinked()
+} catch let error as FiservTTPCardReaderError {
+    // TODO handle exception
+}
+```
+
+Additional information can be found here:
+
+[isAccountLinked](https://developer.apple.com/documentation/proximityreader/paymentcardreader/isaccountlinked\(using:\))
 
 ### Initialize the Card Reader Session
 Now you're ready to initialize the Apple Proximity Reader by calling:
 
 ```Swift
 do {
-    try await self.fiservTTPCardReader.initializeSession()
+    try await fiservTTPCardReader.initializeSession()
 } catch let error as FiservTTPCardReaderError {
-    ///TODO handle exception
+    // TODO handle exception
 }
 ```
 
-**NOTE** that you must re-initialize the reader session each time the app starts and/or returns to the foreground!
+**NOTE:** that you must re-initialize the reader session each time the app starts.
 
-### Take a Payment
+### Take a Payment (Charges)
 Congrats on getting this far!  Now you are ready to process your first payment.  Simply make this call and the SDK takes care of the rest for you:
 
 ```Swift
@@ -134,43 +154,100 @@ let merchantOrderId = "your order ID, for tracking purposes"
 let merchantTransactionId = "your transaction ID, for tracking purposes"
 
 do {
-    let chargeResponse = try await readCard(
-        amount: amount, 
-        merchantOrderId: merchantOrderId, 
-        merchantTransactionId: merchantTransactionId)
-    ///TODO inspect the chargeResponse to see the authorization result
+    let chargeResponse = try await fiservTTPCardReader.readCard(amount: amount, 
+                                                                merchantOrderId: merchantOrderId, 
+                                                                merchantTransactionId: merchantTransactionId)
+    // TODO inspect the chargeResponse to see the authorization result
 } catch let error as FiservTTPCardReaderError {
-    ///TODO handle exception
+    // TODO handle exception
 }
 ```
-### Void a Payment
+
+Additional information can be found here:
+
+[Commerce Hub Charges](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Charges.md&branch=main)
+
+### Cancel a Payment
 
 ```Swift
 let amount = 10.99 // amount to void
 let referenceTransactionId = "this value was returned in the charge response"
 do {
-  let voidResponse = try await voidTransaction(
-      amount:amount,
-      referenceTransactionId = referenceTransactionId)
-    ///TODO inspect the voidResponse to see the result   
+  let voidResponse = try await fiservTTPCardReader.voidTransaction(amount:amount,
+                                                                   referenceTransactionId = referenceTransactionId)\
+    // TODO inspect the voidResponse to see the result
 } catch let error as FiservTTPCardReaderError {
-    ///TODO handle exception
+    // TODO handle exception
 }
 ```
-### Refund a Payment
+Additional information can be found here:
+
+[Commerce Hub Cancel](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Cancel.md&branch=main)
+
+### Refund a Payment without Tap
 
 ```Swift
 let amount = 10.99 // amount to void
 let referenceTransactionId = "this value was returned in the charge response"
 do {
-  let refundResponse = try await refundTransaction(
-      amount:amount,
-      referenceTransactionId = referenceTransactionId)
-    ///TODO inspect the refundResponse to see the result   
+  let refundResponse = try await fiservTTPCardReader.refundTransaction(amount:amount,
+                                                                       referenceTransactionId = referenceTransactionId)
+    // TODO inspect the refundResponse to see the result   
 } catch let error as FiservTTPCardReaderError {
-    ///TODO handle exception
+    // TODO handle exception
 }
 ```
+
+Additional information can be found here:
+
+[Commerce Hub Matched Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Tagged.md&branch=main)
+
+### Refund a Payment with Tap (Unmatched Tagged Refund and Open Refund)
+
+**NOTE:** At least one of the following must be provided (referenceTransactionId, referenceMerchantTransactionId) to perform an unmatched tagged refund. If neither reference values are provided, an open refund be will performed. Amount is always required.
+
+An unmatched tagged refund allows a merchant to issue a refund to a payment source other than the one used in the original transaction. The refund is associated with the original charge request by using the Commerce Hub transaction identifier or merchant transaction identifier. This allows the merchant to maintain the linking of the transaction information in Commerce Hub when issuing a refund or store credit.
+
+An open refund (credit) is a refund to a card without a reference to the prior transaction.
+
+```Swift
+let amount = 10.99 // amount to void
+let referenceTransactionId = "this value was returned in the charge response"
+do {
+    let refundResponse = try await fiservTTPCardReader.refundCard(amount: bankersAmount(amount: amount),
+                                                                  referenceTransactionId: referenceTransactionId,
+                                                                  referenceMerchantTransactionId: referenceMerchantTransactionId)
+    // TODO inspect the refundResponse to see the result
+} catch let error as FiservTTPCardReaderError {
+    // TODO handle exception
+}                                                                 
+```
+Additional information can be found here:
+
+[Commerce Hub Unmatched Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Unmatched.md&branch=main)
+
+[Commerce Hub Open Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Open.md&branch=main)
+
+### Inquiry
+
+To retrieve the current state of any previous transaction, an inquiry request can be submitted against the Commerce Hub transaction identifier or merchant transaction identifier.
+
+**NOTE:** At least one of the arguments must be provided.
+
+```Swift
+do {
+    let inquireResponse = try await fiservTTPCardReader.inquiryTransaction(referenceTransactionId: referenceTransactionId,
+                                                                           referenceMerchantTransactionId: referenceMerchantTransactionId,
+                                                                           referenceMerchantOrderId: referenceMerchantOrderId,
+                                                                           referenceOrderId: referenceOrderId)
+    // TODO inspect the Inquire Response to see the result
+} catch let error as FiservTTPCardReaderError {
+    // TODO handle exception
+}
+```
+Additional information can be found here:
+
+[Commerce Hub Inquiry](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Inquiry.md&branch=main)
 
 ## Download the sample app
 We've prepared an end-to-end sample app to get you up and running fast. [Get the Sample App here](https://github.com/Fiserv/TTPSampleApp)

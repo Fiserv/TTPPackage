@@ -56,6 +56,37 @@ internal class FiservTTPReader {
         return PaymentCardReader.isSupported
     }
     
+    @available(iOS 16.4, *)
+    internal func isAccountLinked(token: String) async throws -> Bool {
+        
+        let title = "Is Account Linked"
+        
+        guard let cardReader = self.paymentCardReader else {
+            
+            throw FiservTTPCardReaderError(title: title,
+                                           localizedDescription: NSLocalizedString("Payment Card Reader not available.", comment: ""))
+        }
+        
+        let token = PaymentCardReader.Token(rawValue: token)
+        
+        do {
+            
+            return try await cardReader.isAccountLinked(using: token)
+            
+        } catch {
+            
+            if let err = error as? PaymentCardReaderError {
+                
+                throw FiservTTPCardReaderError(title: err.errorName,
+                                               localizedDescription: NSLocalizedString(err.errorDescription, comment: ""))
+                
+            } else {
+                throw FiservTTPCardReaderError(title: title,
+                                               localizedDescription: error.localizedDescription)
+            }
+        }
+    }
+    
     // Only handle the condition where the account is already linked
     // All other errors will propagate to surrounding scope
     internal func linkAccount(token: String) async throws {
@@ -179,8 +210,9 @@ internal class FiservTTPReader {
     }
     
     internal func readCard(for amount: Decimal,
-                         currencyCode: String,
-                         eventHandler: @escaping (String) -> Void) async throws -> Result<PaymentCardReadResult, Error> {
+                           currencyCode: String,
+                           transactionType: PaymentCardTransactionRequest.TransactionType,
+                           eventHandler: @escaping (String) -> Void) async throws -> Result<PaymentCardReadResult, Error> {
         
         guard let session = cardReaderSession else {
          
@@ -188,7 +220,8 @@ internal class FiservTTPReader {
                                                      localizedDescription: NSLocalizedString("The card reader session has not been initialized.", comment: "")))
         }
         do {
-            let request = PaymentCardTransactionRequest(amount: amount, currencyCode: currencyCode, for: .purchase)
+            
+            let request = PaymentCardTransactionRequest(amount: amount, currencyCode: currencyCode, for: transactionType)
             
             // This method throws a ReadError if a person dismisses the sheet or the sheet fails to appear.
             

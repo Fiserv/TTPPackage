@@ -47,6 +47,8 @@ public class FiservTTPCardReader {
     
     private var token: String?
     
+    private var tokenExp: Double = 0.0
+    
     public var sessionReadySubject: PassthroughSubject<Bool, Never> = .init()
     
     /// Creates an instance of FiservTTPCardReader
@@ -87,13 +89,25 @@ public class FiservTTPCardReader {
     /// - Throws: An error of type FiservTTPCardReaderError
     ///
     public func requestSessionToken() async throws {
-        
+            
         let title = "Token Request"
         
         let result = await services.requestSessionToken()
         
+        self.token = nil
+        
+        self.tokenExp = 0
+        
         do {
-            self.token = try result.get().accessToken
+            
+            let jwtToken = try result.get().accessToken
+            
+            let tokenExpiration = try decode(jwtToken: jwtToken)["exp"] as? TimeInterval
+            
+            self.tokenExp = tokenExpiration ?? 0
+            
+            self.token = jwtToken
+            
         } catch {
             
             if let err = error as? FiservTTPRequestError {
@@ -106,6 +120,29 @@ public class FiservTTPCardReader {
                 throw FiservTTPCardReaderError(title: title,
                                                localizedDescription: NSLocalizedString("Unable to request a session token.", comment: ""))
             }
+        }
+    }
+    
+    /// A Boolean value that indicates whether the account is already linked.
+    ///
+    /// Call linkAccount(using:)  to link an account.
+    ///
+    /// If PaymentCardReader/prepare(using:) throws an PaymentCardReaderError/accountNotLinked error
+    /// call linkAccount(using:) again to relink the account.
+    ///
+    /// - Throws: An error of type FiservTTPCardReaderError
+    ///
+    @available(iOS 16.4, *)
+    public func isAccountLinked() async throws -> Bool {
+        
+        if let token = self.token {
+            
+            return try await self.fiservTTPReader.isAccountLinked(token: token)
+            
+        } else {
+            
+            throw FiservTTPCardReaderError(title: "Missing Token",
+                                           localizedDescription: NSLocalizedString("Unable to link this account, a token is required.", comment: ""))
         }
     }
     
@@ -140,9 +177,27 @@ public class FiservTTPCardReader {
     /// - Throws: An error of type FiservTTPCardReaderError
     ///
     public func initializeSession() async throws {
+            
+        if self.token != nil {
+            
+            // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            // Check CommerceHub Token Expiration
+            // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            let timestamp = Date().timeIntervalSince1970
+            
+            if self.tokenExp - timestamp < 1800 { // 30 minutes
+                
+                try await requestSessionToken()   // Auto Refresh
+            }
+            
+        } else {
+            
+            throw FiservTTPCardReaderError(title: "Missing Token",
+                                           localizedDescription: NSLocalizedString("Unable to initialize the session, a token is required.", comment: ""))
+        }
         
         if let token = self.token {
-
+            
             try await self.fiservTTPReader.initializeSession(token: token, eventHandler: { event in
                 
                 if event == "notReady" {
@@ -153,7 +208,7 @@ public class FiservTTPCardReader {
             self.sessionReadySubject.send(true)
             
         } else {
-            
+
             throw FiservTTPCardReaderError(title: "Missing Token",
                                            localizedDescription: NSLocalizedString("Unable to initialize the session, a token is required.", comment: ""))
         }
@@ -209,6 +264,7 @@ public class FiservTTPCardReader {
         
         let result = try await self.fiservTTPReader.readCard(for: amount,
                                                              currencyCode: self.configuration.currencyCode,
+                                                             transactionType: .purchase,
                                                              eventHandler: { _ in
         })
         
@@ -251,21 +307,73 @@ public class FiservTTPCardReader {
         }
     }
     
+    /// Inquire a transaction
+    ///
+    /// This method provides a way to lookup an existing transaction. At least one of the optional values must be provided.
+    ///
+    /// - Parameter referenceTransactionId: String
+    ///
+    /// - Parameter referenceMerchantTransactionId: String
+    ///
+    /// - Parameter referenceMerchantOrderId: String
+    ///
+    /// - Parameter referenceOrderId: String
+    ///
+    /// - Returns:FiservTTPChargeResponse
+    ///
+    /// - Throws: An error of type FiservTTPCardReaderError
+    ///
+    public func inquiryTransaction(referenceTransactionId: String? = nil,
+                                   referenceMerchantTransactionId: String? = nil,
+                                   referenceMerchantOrderId: String? = nil,
+                                   referenceOrderId: String? = nil) async throws -> [FiservTTPChargeResponse] {
+        
+        let title = "Inquiry Transaction"
+        
+        let inquiryResult = await services.inquiry(referenceTransactionId: referenceTransactionId,
+                                                   referenceMerchantTransactionId: referenceMerchantTransactionId,
+                                                   referenceMerchantOrderId: referenceMerchantOrderId,
+                                                   referenceOrderId: referenceOrderId)
+        
+        switch inquiryResult {
+            
+        case .success(let response):
+            
+            return response
+            
+        case .failure(let err):
+            
+            throw FiservTTPCardReaderError(title: title,
+                                           localizedDescription: err.localizedDescription,
+                                           failureReason: err.failureReason)
+        }
+    }
+    
+    /// Void a transaction
+    ///
+    /// This method provides a way to void an existing transaction. At least one of the optional values must be provided.
+    ///
+    /// - Parameter amount: Decimal
+    ///
+    /// - Parameter referenceTransactionId: String
+    ///
+    /// - Parameter referenceMerchantTransactionId: String
+    ///
+    /// - Returns:FiservTTPChargeResponse
+    ///
+    /// - Throws: An error of type FiservTTPCardReaderError
+    ///
     public func voidTransaction(amount: Decimal,
                                 referenceTransactionId: String? = nil,
-                                referenceOrderId: String? = nil,
-                                referenceMerchantTransactionId: String? = nil,
-                                referenceMerchantOrderId: String? = nil) async throws -> FiservTTPChargeResponse {
+                                referenceMerchantTransactionId: String? = nil) async throws -> FiservTTPChargeResponse {
         
         let title = "Void Transaction"
         
         let voidResult = await services.void(referenceTransactionId: referenceTransactionId,
-                                             referenceOrderId: referenceOrderId,
                                              referenceMerchantTransactionId: referenceMerchantTransactionId,
-                                             referenceMerchantOrderId: referenceMerchantOrderId,
                                              referenceTransactionType: "CHARGES",
                                              total: amount,
-                                             currencyCode: "USD")
+                                             currencyCode: self.configuration.currencyCode)
         
         switch voidResult {
             
@@ -281,21 +389,31 @@ public class FiservTTPCardReader {
         }
     }
     
+    /// Refund a transaction
+    ///
+    /// This method provides a way to refund an existing transaction. At least one of the optional values must be provided.
+    ///
+    /// - Parameter amount: Decimal
+    ///
+    /// - Parameter referenceTransactionId: String
+    ///
+    /// - Parameter referenceMerchantTransactionId: String
+    ///
+    /// - Returns:FiservTTPChargeResponse
+    ///
+    /// - Throws: An error of type FiservTTPCardReaderError
+    ///
     public func refundTransaction(amount: Decimal,
                                   referenceTransactionId: String? = nil,
-                                  referenceOrderId: String? = nil,
-                                  referenceMerchantTransactionId: String? = nil,
-                                  referenceMerchantOrderId: String? = nil) async throws -> FiservTTPChargeResponse {
+                                  referenceMerchantTransactionId: String? = nil) async throws -> FiservTTPChargeResponse {
         
         let title = "Refund Transaction"
         
         let refundResult = await services.refund(referenceTransactionId: referenceTransactionId,
-                                                 referenceOrderId: referenceOrderId,
                                                  referenceMerchantTransactionId: referenceMerchantTransactionId,
-                                                 referenceMerchantOrderId: referenceMerchantOrderId,
                                                  referenceTransactionType: "CHARGES",
                                                  total: amount,
-                                                 currencyCode: "USD")
+                                                 currencyCode: self.configuration.currencyCode)
         
         switch refundResult {
             
@@ -311,6 +429,78 @@ public class FiservTTPCardReader {
         }
     }
     
+    /// Read and process a card for the amount provided
+    ///
+    /// This method allows a card to be refunded for the specified amount.
+    ///
+    /// - Parameter amount: Decimal
+    ///
+    /// - Parameter referenceTransactionId: String
+    ///
+    /// - Parameter referenceMerchantTransactionId: String
+    ///
+    /// - Returns:FiservTTPChargeResponse
+    ///
+    /// - Throws: An error of type FiservTTPCardReaderError
+    ///
+    public func refundCard(amount: Decimal,
+                           referenceTransactionId: String? = nil,
+                           referenceMerchantTransactionId: String? = nil) async throws -> FiservTTPChargeResponse {
+        
+        let title = "Refund Payment Card"
+        
+        guard let readerIdentifier = self.fiservTTPReader.readerIdentifier() else {
+            
+            throw FiservTTPCardReaderError(title: title,
+                                           localizedDescription: NSLocalizedString("Payment Card Reader not identified.", comment: ""))
+        }
+        
+        let result = try await self.fiservTTPReader.readCard(for: amount,
+                                                             currencyCode: self.configuration.currencyCode,
+                                                             transactionType: .refund,
+                                                             eventHandler: { _ in
+        })
+        
+        switch result {
+            
+        case .success(let cardReadResult):
+            
+            guard let generalCardData = cardReadResult.generalCardData, let _ = cardReadResult.paymentCardData else {
+                
+                throw FiservTTPCardReaderError(title: title,
+                                               localizedDescription: NSLocalizedString("Payment Card data missing or corrupt.", comment: ""))
+            }
+            
+            let refundCardResult = await services.refundCard(referenceTransactionId: referenceTransactionId,
+                                                             referenceMerchantTransactionId: referenceMerchantTransactionId,
+                                                             referenceTransactionType: "CHARGES",
+                                                             total: amount,
+                                                             currencyCode: self.configuration.currencyCode,
+                                                             paymentCardReaderId: readerIdentifier,
+                                                             paymentCardReadResult: cardReadResult)
+            
+            switch refundCardResult {
+                
+            case .success(let response):
+                
+                let appendedResponse = appGeneralCardData(generalCardData: generalCardData, response: response)
+                
+                return appendedResponse
+            
+            case .failure(let err):
+                
+                throw FiservTTPCardReaderError(title: title,
+                                               localizedDescription: err.localizedDescription,
+                                               failureReason: err.failureReason)
+            }
+            
+        case .failure(let error):
+            
+            throw FiservTTPCardReaderError(title: title,
+                                           localizedDescription: error.localizedDescription)
+        }
+    }
+    
     private func appGeneralCardData(generalCardData: String, response: FiservTTPChargeResponse) -> FiservTTPChargeResponse {
         
         let appendedResponse = FiservTTPChargeResponse(gatewayResponse: response.gatewayResponse,
@@ -323,7 +513,8 @@ public class FiservTTPCardReader {
                                                        transactionInteraction: response.transactionInteraction,
                                                        merchantDetails: response.merchantDetails,
                                                        networkDetails: response.networkDetails,
-                                                       cardDetails: response.cardDetails)
+                                                       cardDetails: response.cardDetails,
+                                                       error: response.error)
         
         return appendedResponse
     }
@@ -335,5 +526,39 @@ public class FiservTTPCardReader {
         }
         
         return data.map { String(format: "%02hhx", $0) }.joined()
+    }
+}
+
+extension FiservTTPCardReader {
+    
+    func decode(jwtToken jwt: String) throws -> [String: Any] {
+
+        enum DecodeErrors: Error {
+            case badToken
+            case other
+        }
+
+        func base64Decode(_ base64: String) throws -> Data {
+            let base64 = base64
+                .replacingOccurrences(of: "-", with: "+")
+                .replacingOccurrences(of: "_", with: "/")
+            let padded = base64.padding(toLength: ((base64.count + 3) / 4) * 4, withPad: "=", startingAt: 0)
+            guard let decoded = Data(base64Encoded: padded) else {
+                throw DecodeErrors.badToken
+            }
+            return decoded
+        }
+
+        func decodeJWTPart(_ value: String) throws -> [String: Any] {
+            let bodyData = try base64Decode(value)
+            let json = try JSONSerialization.jsonObject(with: bodyData, options: [])
+            guard let payload = json as? [String: Any] else {
+                throw DecodeErrors.other
+            }
+            return payload
+        }
+
+        let segments = jwt.components(separatedBy: ".")
+        return try decodeJWTPart(segments[1])
     }
 }
