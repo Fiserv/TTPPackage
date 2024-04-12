@@ -90,10 +90,6 @@ if !fiservTTPCardReader.readerIsSupported() {
 
 ### Obtain PSP Token
 
-Additional information can be found here:
-
-[Commerce Hub Security](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Security/Credentials.md&branch=main#endpoint)
-
 You must obtain a session token in order to utilize the SDK.  Acquire the token by making this call:
 
 ```Swift
@@ -105,6 +101,10 @@ do {
 ```
 
 Note that the session token has a time to live of 48 hours. However, we have included an **auto-refresh feature** that will request a new token for you when the TTL value is 30 minutes or less. Moving the app from the background to the foreground, as well as unlocking (a locked iPhone) will trigger this check and the refresh will occur based on the time remaining of the token. 
+
+Additional information can be found here:
+
+[Commerce Hub Security](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Security/Credentials.md&branch=main#endpoint)
 
 ### Link Account
 Next you must link the device running the app to an Apple ID. This needs to happen **just once**.  You are responsible for tracking whether the linking process has occurred already or not.  If not, then perform linking by making this call:
@@ -149,10 +149,6 @@ do {
 ### Take a Payment (Charges)
 Congrats on getting this far!  Now you are ready to process your first payment.  Simply make this call and the SDK takes care of the rest for you:
 
-Additional information can be found here:
-
-[Commerce Hub Charges](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Charges.md&branch=main)
-
 ```Swift
 let amount = 10.99  // amount to charge
 let merchantOrderId = "your order ID, for tracking purposes"
@@ -167,11 +163,12 @@ do {
     // TODO handle exception
 }
 ```
-### Cancel a Payment
 
 Additional information can be found here:
 
-[Commerce Hub Cancel](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Cancel.md&branch=main)
+[Commerce Hub Charges](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Charges.md&branch=main)
+
+### Cancel a Payment
 
 ```Swift
 let amount = 10.99 // amount to void
@@ -184,11 +181,11 @@ do {
     // TODO handle exception
 }
 ```
-### Refund a Payment without Tap
-
 Additional information can be found here:
 
-[Commerce Hub Matched Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Tagged.md&branch=main)
+[Commerce Hub Cancel](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Cancel.md&branch=main)
+
+### Refund a Payment without Tap
 
 ```Swift
 let amount = 10.99 // amount to void
@@ -202,19 +199,15 @@ do {
 }
 ```
 
+Additional information can be found here:
+
+[Commerce Hub Matched Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Tagged.md&branch=main)
+
 ### Refund a Payment with Tap (Unmatched Tagged Refund and Open Refund)
 
 **NOTE:** At least one of the following must be provided (referenceTransactionId, referenceMerchantTransactionId) to perform an unmatched tagged refund. If neither reference values are provided, an open refund be will performed. Amount is always required.
 
-Additional information can be found here:
-
-[Commerce Hub Unmatched Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Unmatched.md&branch=main)
-
 An unmatched tagged refund allows a merchant to issue a refund to a payment source other than the one used in the original transaction. The refund is associated with the original charge request by using the Commerce Hub transaction identifier or merchant transaction identifier. This allows the merchant to maintain the linking of the transaction information in Commerce Hub when issuing a refund or store credit.
-
-    
-
-[Commerce Hub Open Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Open.md&branch=main)
 
 An open refund (credit) is a refund to a card without a reference to the prior transaction.
 
@@ -230,14 +223,15 @@ do {
     // TODO handle exception
 }                                                                 
 ```
+Additional information can be found here:
+
+[Commerce Hub Unmatched Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Unmatched.md&branch=main)
+
+[Commerce Hub Open Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Open.md&branch=main)
 
 ### Inquiry
 
 To retrieve the current state of any previous transaction, an inquiry request can be submitted against the Commerce Hub transaction identifier or merchant transaction identifier.
-
-Additional information can be found here:
-
-[Commerce Hub Inquiry](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Inquiry.md&branch=main)
 
 **NOTE:** At least one of the arguments must be provided.
 
@@ -252,6 +246,9 @@ do {
     // TODO handle exception
 }
 ```
+Additional information can be found here:
+
+[Commerce Hub Inquiry](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Inquiry.md&branch=main)
 
 ## Download the sample app
 We've prepared an end-to-end sample app to get you up and running fast. [Get the Sample App here](https://github.com/Fiserv/TTPSampleApp)
