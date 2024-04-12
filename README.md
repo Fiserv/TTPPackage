@@ -92,7 +92,7 @@ if !fiservTTPCardReader.readerIsSupported() {
 
 Additional information can be found here:
 
-[Commerce Hub Inquire](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Security/Credentials.md&branch=main#endpoint)
+[Commerce Hub Security](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Security/Credentials.md&branch=main#endpoint)
 
 You must obtain a session token in order to utilize the SDK.  Acquire the token by making this call:
 
@@ -167,27 +167,6 @@ do {
     // TODO handle exception
 }
 ```
-
-### Inquiry
-
-Additional information can be found here:
-
-[Commerce Hub Inquiry](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Inquiry.md&branch=main)
-
-**NOTE:** At least one of the arguments must be provided.
-
-```Swift
-do {
-    let inquireResponse = try await fiservTTPCardReader.inquiryTransaction(referenceTransactionId: referenceTransactionId,
-                                                                           referenceMerchantTransactionId: referenceMerchantTransactionId,
-                                                                           referenceMerchantOrderId: referenceMerchantOrderId,
-                                                                           referenceOrderId: referenceOrderId)
-    // TODO inspect the Inquire Response to see the result
-} catch let error as FiservTTPCardReaderError {
-    // TODO handle exception
-}
-```
-
 ### Cancel a Payment
 
 Additional information can be found here:
@@ -230,8 +209,14 @@ do {
 Additional information can be found here:
 
 [Commerce Hub Unmatched Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Unmatched.md&branch=main)
+
+An unmatched tagged refund allows a merchant to issue a refund to a payment source other than the one used in the original transaction. The refund is associated with the original charge request by using the Commerce Hub transaction identifier or merchant transaction identifier. This allows the merchant to maintain the linking of the transaction information in Commerce Hub when issuing a refund or store credit.
+
     
+
 [Commerce Hub Open Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Open.md&branch=main)
+
+An open refund (credit) is a refund to a card without a reference to the prior transaction.
 
 ```Swift
 let amount = 10.99 // amount to void
@@ -244,6 +229,28 @@ do {
 } catch let error as FiservTTPCardReaderError {
     // TODO handle exception
 }                                                                 
+```
+
+### Inquiry
+
+To retrieve the current state of any previous transaction, an inquiry request can be submitted against the Commerce Hub transaction identifier or merchant transaction identifier.
+
+Additional information can be found here:
+
+[Commerce Hub Inquiry](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Inquiry.md&branch=main)
+
+**NOTE:** At least one of the arguments must be provided.
+
+```Swift
+do {
+    let inquireResponse = try await fiservTTPCardReader.inquiryTransaction(referenceTransactionId: referenceTransactionId,
+                                                                           referenceMerchantTransactionId: referenceMerchantTransactionId,
+                                                                           referenceMerchantOrderId: referenceMerchantOrderId,
+                                                                           referenceOrderId: referenceOrderId)
+    // TODO inspect the Inquire Response to see the result
+} catch let error as FiservTTPCardReaderError {
+    // TODO handle exception
+}
 ```
 
 ## Download the sample app
