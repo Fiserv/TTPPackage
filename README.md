@@ -120,10 +120,6 @@ do {
 ### Is Account Linked
 When targeting iOS 16.4 or greater, the option to check if the account is already linked is available.
 
-Additional information can be found here:
-
-[isAccountLinked](https://developer.apple.com/documentation/proximityreader/paymentcardreader/isaccountlinked\(using:\))
-
 ```Swift
 do {
     let isLinked = try await fiservTTPCardReader.isAccountLinked()
@@ -132,6 +128,9 @@ do {
 }
 ```
 
+Additional information can be found here:
+
+[isAccountLinked](https://developer.apple.com/documentation/proximityreader/paymentcardreader/isaccountlinked\(using:\))
 
 ### Initialize the Card Reader Session
 Now you're ready to initialize the Apple Proximity Reader by calling:
