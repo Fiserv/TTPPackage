@@ -44,11 +44,13 @@ public struct FiservTTPResponseWrapper: Identifiable {
     public let id: UUID
     public let title: String
     public let response: FiservTTPChargeResponse?
+    public let responses: [FiservTTPChargeResponse]?
     
-    public init(id: UUID = UUID(), title: String, response: FiservTTPChargeResponse?) {
+    public init(id: UUID = UUID(), title: String, response: FiservTTPChargeResponse? = nil, responses: [FiservTTPChargeResponse]? = nil) {
         self.id = id
         self.title = title
         self.response = response
+        self.responses = responses
     }
 }
 
@@ -275,20 +277,14 @@ internal struct FiservTTPVoidMerchantDetails: Codable {
 
 internal struct FiservTTPVoidReferenceTransactionDetails: Codable {
     let referenceTransactionId: String?
-    let referenceOrderId: String?
     let referenceMerchantTransactionId: String?
-    let referenceMerchantOrderId: String?
     let referenceTransactionType: String
     
     internal init(referenceTransactionId: String? = nil,
-                  referenceOrderId: String? = nil,
                   referenceMerchantTransactionId: String? = nil,
-                  referenceMerchantOrderId: String? = nil,
                   referenceTransactionType: String) {
         self.referenceTransactionId = referenceTransactionId
-        self.referenceOrderId = referenceOrderId
         self.referenceMerchantTransactionId = referenceMerchantTransactionId
-        self.referenceMerchantOrderId = referenceMerchantOrderId
         self.referenceTransactionType = referenceTransactionType
     }
 }
@@ -314,20 +310,14 @@ internal struct FiservTTPRefundMerchantDetails: Codable {
 
 internal struct FiservTTPRefundReferenceTransactionDetails: Codable {
     let referenceTransactionId: String?
-    let referenceOrderId: String?
     let referenceMerchantTransactionId: String?
-    let referenceMerchantOrderId: String?
     let referenceTransactionType: String
     
     internal init(referenceTransactionId: String? = nil,
-                  referenceOrderId: String? = nil,
                   referenceMerchantTransactionId: String? = nil,
-                  referenceMerchantOrderId: String? = nil,
                   referenceTransactionType: String) {
         self.referenceTransactionId = referenceTransactionId
-        self.referenceOrderId = referenceOrderId
         self.referenceMerchantTransactionId = referenceMerchantTransactionId
-        self.referenceMerchantOrderId = referenceMerchantOrderId
         self.referenceTransactionType = referenceTransactionType
     }
 }
@@ -439,6 +429,7 @@ public struct FiservTTPChargeResponse: Codable {
     public let merchantDetails: FiservTTPChargeResponseMerchantDetails?
     public let networkDetails: FiservTTPChargeResponseNetworkDetails?
     public let cardDetails: FiservTTPChargeResponseCardDetails?
+    public let error: [FiservTTPServerErrorError]?
 }
 
 public struct FiservTTPChargeResponseGatewayResponse: Codable {

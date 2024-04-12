@@ -185,7 +185,7 @@ public class FiservTTPCardReader {
             // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             let timestamp = Date().timeIntervalSince1970
             
-            if self.tokenExp - timestamp < (300 - 180) { // 1800 { // 30 minutes
+            if self.tokenExp - timestamp < 1800 { // 30 minutes
                 
                 try await requestSessionToken()   // Auto Refresh
             }
@@ -307,7 +307,7 @@ public class FiservTTPCardReader {
         }
     }
     
-    /// Verify a transaction
+    /// Inquire a transaction
     ///
     /// This method provides a way to lookup an existing transaction. At least one of the optional values must be provided.
     ///
@@ -319,14 +319,6 @@ public class FiservTTPCardReader {
     ///
     /// - Parameter referenceOrderId: String
     ///
-    /// - Parameter referenceClientRequestId: String
-    ///
-    /// - Parameter tokenType: String
-    ///
-    /// - Parameter storeId: String
-    ///
-    /// - Parameter siteId: String
-    ///
     /// - Returns:FiservTTPChargeResponse
     ///
     /// - Throws: An error of type FiservTTPCardReaderError
@@ -334,22 +326,14 @@ public class FiservTTPCardReader {
     public func inquiryTransaction(referenceTransactionId: String? = nil,
                                    referenceMerchantTransactionId: String? = nil,
                                    referenceMerchantOrderId: String? = nil,
-                                   referenceOrderId: String? = nil,
-                                   referenceClientRequestId: String? = nil,
-                                   tokenType: String? = nil,
-                                   storeId: String? = nil,
-                                   siteId: String? = nil) async throws -> [FiservTTPChargeResponse] {
+                                   referenceOrderId: String? = nil) async throws -> [FiservTTPChargeResponse] {
         
         let title = "Inquiry Transaction"
         
         let inquiryResult = await services.inquiry(referenceTransactionId: referenceTransactionId,
                                                    referenceMerchantTransactionId: referenceMerchantTransactionId,
                                                    referenceMerchantOrderId: referenceMerchantOrderId,
-                                                   referenceOrderId: referenceOrderId,
-                                                   referenceClientRequestId: referenceClientRequestId,
-                                                   tokenType: tokenType,
-                                                   storeId: storeId,
-                                                   siteId: siteId)
+                                                   referenceOrderId: referenceOrderId)
         
         switch inquiryResult {
             
@@ -373,11 +357,7 @@ public class FiservTTPCardReader {
     ///
     /// - Parameter referenceTransactionId: String
     ///
-    /// - Parameter referenceOrderId: String
-    ///
     /// - Parameter referenceMerchantTransactionId: String
-    ///
-    /// - Parameter referenceMerchantOrderId: String
     ///
     /// - Returns:FiservTTPChargeResponse
     ///
@@ -385,16 +365,12 @@ public class FiservTTPCardReader {
     ///
     public func voidTransaction(amount: Decimal,
                                 referenceTransactionId: String? = nil,
-                                referenceOrderId: String? = nil,
-                                referenceMerchantTransactionId: String? = nil,
-                                referenceMerchantOrderId: String? = nil) async throws -> FiservTTPChargeResponse {
+                                referenceMerchantTransactionId: String? = nil) async throws -> FiservTTPChargeResponse {
         
         let title = "Void Transaction"
         
         let voidResult = await services.void(referenceTransactionId: referenceTransactionId,
-                                             referenceOrderId: referenceOrderId,
                                              referenceMerchantTransactionId: referenceMerchantTransactionId,
-                                             referenceMerchantOrderId: referenceMerchantOrderId,
                                              referenceTransactionType: "CHARGES",
                                              total: amount,
                                              currencyCode: self.configuration.currencyCode)
@@ -421,11 +397,7 @@ public class FiservTTPCardReader {
     ///
     /// - Parameter referenceTransactionId: String
     ///
-    /// - Parameter referenceOrderId: String
-    ///
     /// - Parameter referenceMerchantTransactionId: String
-    ///
-    /// - Parameter referenceMerchantOrderId: String
     ///
     /// - Returns:FiservTTPChargeResponse
     ///
@@ -433,16 +405,12 @@ public class FiservTTPCardReader {
     ///
     public func refundTransaction(amount: Decimal,
                                   referenceTransactionId: String? = nil,
-                                  referenceOrderId: String? = nil,
-                                  referenceMerchantTransactionId: String? = nil,
-                                  referenceMerchantOrderId: String? = nil) async throws -> FiservTTPChargeResponse {
+                                  referenceMerchantTransactionId: String? = nil) async throws -> FiservTTPChargeResponse {
         
         let title = "Refund Transaction"
         
         let refundResult = await services.refund(referenceTransactionId: referenceTransactionId,
-                                                 referenceOrderId: referenceOrderId,
                                                  referenceMerchantTransactionId: referenceMerchantTransactionId,
-                                                 referenceMerchantOrderId: referenceMerchantOrderId,
                                                  referenceTransactionType: "CHARGES",
                                                  total: amount,
                                                  currencyCode: self.configuration.currencyCode)
@@ -469,11 +437,7 @@ public class FiservTTPCardReader {
     ///
     /// - Parameter referenceTransactionId: String
     ///
-    /// - Parameter referenceOrderId: String
-    ///
     /// - Parameter referenceMerchantTransactionId: String
-    ///
-    /// - Parameter referenceMerchantOrderId: String
     ///
     /// - Returns:FiservTTPChargeResponse
     ///
@@ -481,9 +445,7 @@ public class FiservTTPCardReader {
     ///
     public func refundCard(amount: Decimal,
                            referenceTransactionId: String? = nil,
-                           referenceOrderId: String? = nil,
-                           referenceMerchantTransactionId: String? = nil,
-                           referenceMerchantOrderId: String? = nil) async throws -> FiservTTPChargeResponse {
+                           referenceMerchantTransactionId: String? = nil) async throws -> FiservTTPChargeResponse {
         
         let title = "Refund Payment Card"
         
@@ -510,9 +472,7 @@ public class FiservTTPCardReader {
             }
             
             let refundCardResult = await services.refundCard(referenceTransactionId: referenceTransactionId,
-                                                             referenceOrderId: referenceOrderId,
                                                              referenceMerchantTransactionId: referenceMerchantTransactionId,
-                                                             referenceMerchantOrderId: referenceMerchantOrderId,
                                                              referenceTransactionType: "CHARGES",
                                                              total: amount,
                                                              currencyCode: self.configuration.currencyCode,
@@ -553,7 +513,8 @@ public class FiservTTPCardReader {
                                                        transactionInteraction: response.transactionInteraction,
                                                        merchantDetails: response.merchantDetails,
                                                        networkDetails: response.networkDetails,
-                                                       cardDetails: response.cardDetails)
+                                                       cardDetails: response.cardDetails,
+                                                       error: response.error)
         
         return appendedResponse
     }
