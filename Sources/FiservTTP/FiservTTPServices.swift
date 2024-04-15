@@ -550,7 +550,7 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
                                                       cardReaderTransactionId: cardReaderTransactionId,
                                                       appleTtpMerchantId: self.config.appleTtpMerchantId)
         
-        let posFeatures = FiservTTPRefundCardRequestPosFeatures(pinAuthenticationCapability: "CAN_ACCEPT_PIN",
+        let posFeatures = FiservTTPRefundCardRequestPosFeatures(pinAuthenticationCapability: "CANNOT_ACCEPT_PIN",
                                                                 terminalEntryCapability: "CONTACTLESS")
         
         let dataEntrySource = FiservTTPRefundCardRequestDataEntrySource(dataEntrySource: "MOBILE_TERMINAL",
