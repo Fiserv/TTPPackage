@@ -431,9 +431,15 @@ public class FiservTTPCardReader {
     
     /// Read and process a card for the amount provided
     ///
-    /// This method allows a card to be refunded for the specified amount.
+    /// This method allows a card to be refunded for the specified amount. When the intent is an Open Refund, provide your merchantOrderId or
+    /// your merchantTransactionId, but do not provide any reference values. When the intent is an Tagged Unmatched Refund, at least one reference
+    /// value must be provided, but it is okay to populate all values.
     ///
     /// - Parameter amount: Decimal
+    ///
+    /// - Parameter merchantOrderId: String
+    ///
+    /// - Parameter merchantTransactionId: String
     ///
     /// - Parameter referenceTransactionId: String
     ///
@@ -444,6 +450,8 @@ public class FiservTTPCardReader {
     /// - Throws: An error of type FiservTTPCardReaderError
     ///
     public func refundCard(amount: Decimal,
+                           merchantOrderId: String? = nil,
+                           merchantTransactionId: String? = nil,
                            referenceTransactionId: String? = nil,
                            referenceMerchantTransactionId: String? = nil) async throws -> FiservTTPChargeResponse {
         
@@ -471,7 +479,9 @@ public class FiservTTPCardReader {
                                                localizedDescription: NSLocalizedString("Payment Card data missing or corrupt.", comment: ""))
             }
             
-            let refundCardResult = await services.refundCard(referenceTransactionId: referenceTransactionId,
+            let refundCardResult = await services.refundCard(merchantOrderId: merchantOrderId,
+                                                             merchantTransactionId: merchantTransactionId,
+                                                             referenceTransactionId: referenceTransactionId,
                                                              referenceMerchantTransactionId: referenceMerchantTransactionId,
                                                              referenceTransactionType: "CHARGES",
                                                              total: amount,

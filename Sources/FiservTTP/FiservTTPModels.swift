@@ -355,7 +355,6 @@ internal struct FiservTTPRefundCardRequestPosFeatures: Codable {
     let terminalEntryCapability: String
 }
 
-
 internal struct FiservTTPRefundCardRequestAdditionalDataCommon: Codable {
     let origin: FiservTTPRefundCardRequestAdditionalDataCommonProcessors
 }
@@ -383,9 +382,16 @@ internal struct FiservTTPRefundCardRequestTransactionInteraction: Codable {
     let additionalPosInformation: FiservTTPRefundCardRequestDataEntrySource
 }
 
+internal struct FiservTTPRefundCardRequestTransactionDetails: Codable {
+    let captureFlag: Bool
+    let merchantOrderId: String?
+    let merchantTransactionId: String?
+}
+
 internal struct FiservTTPRefundCardRequest: Codable {
     let amount: FiservTTPRefundCardRequestAmount
     let source: FiservTTPRefundCardRequestSource
+    let transactionDetails: FiservTTPRefundCardRequestTransactionDetails?
     let referenceTransactionDetails: FiservTTPRefundReferenceTransactionDetails?
     let transactionInteraction: FiservTTPRefundCardRequestTransactionInteraction
     let merchantDetails: FiservTTPRefundCardRequestMerchantDetails
@@ -445,6 +451,7 @@ public struct FiservTTPChargeResponseTransactionProcessingDetails: Codable {
     public let apiTraceId: String?
     public let clientRequestId: String?
     public let transactionId: String?
+    public let apiKey: String?
 }
 
 public struct FiservTTPChargeResponseSource: Codable {
