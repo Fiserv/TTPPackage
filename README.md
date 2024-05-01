@@ -102,8 +102,7 @@ do {
 
 Note that the session token has a time to live of 48 hours. However, we have included an **auto-refresh feature** that will request a new token for you when the TTL value is 30 minutes or less. Moving the app from the background to the foreground, as well as unlocking (a locked iPhone) will trigger this check and the refresh will occur based on the time remaining of the token. 
 
-Additional information can be found here:
-
+Additional information can be found here:
 [Commerce Hub Security](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Security/Credentials.md&branch=main#endpoint)
 
 ### Link Account
@@ -128,8 +127,7 @@ do {
 }
 ```
 
-Additional information can be found here:
-
+Additional information can be found here:
 [isAccountLinked](https://developer.apple.com/documentation/proximityreader/paymentcardreader/isaccountlinked\(using:\))
 
 ### Initialize the Card Reader Session
@@ -163,8 +161,7 @@ do {
 }
 ```
 
-Additional information can be found here:
-
+Additional information can be found here:
 [Commerce Hub Charges](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Charges.md&branch=main)
 
 ### Cancel a Payment
@@ -173,24 +170,25 @@ Additional information can be found here:
 let amount = 10.99 // amount to void
 let referenceTransactionId = "this value was returned in the charge response"
 do {
-  let voidResponse = try await fiservTTPCardReader.voidTransaction(amount:amount,
-                                                                   referenceTransactionId = referenceTransactionId)\
+  let voidResponse = try await fiservTTPCardReader.voidTransaction(amount: amount,
+                                                                   referenceTransactionId = referenceTransactionId)
     // TODO inspect the voidResponse to see the result
 } catch let error as FiservTTPCardReaderError {
     // TODO handle exception
 }
 ```
-Additional information can be found here:
-
+Additional information can be found here:
 [Commerce Hub Cancel](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Cancel.md&branch=main)
 
-### Refund a Payment without Tap
+### Refund Payment without Tap
+
+At least one reference transaction identifier must be provided to perform a Tagged Refund.
 
 ```Swift
 let amount = 10.99 // amount to void
 let referenceTransactionId = "this value was returned in the charge response"
 do {
-  let refundResponse = try await fiservTTPCardReader.refundTransaction(amount:amount,
+  let refundResponse = try await fiservTTPCardReader.refundTransaction(amount: amount,
                                                                        referenceTransactionId = referenceTransactionId)
     // TODO inspect the refundResponse to see the result   
 } catch let error as FiservTTPCardReaderError {
@@ -198,23 +196,47 @@ do {
 }
 ```
 
-Additional information can be found here:
-
+Additional information can be found here:
 [Commerce Hub Matched Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Tagged.md&branch=main)
 
-### Refund a Payment with Tap (Unmatched Tagged Refund and Open Refund)
+### Refund Payment with Tap (Unmatched Tagged Refund and Open Refund)
 
-**NOTE:** At least one of the following must be provided (referenceTransactionId, referenceMerchantTransactionId) to perform an unmatched tagged refund. If neither reference values are provided, an open refund be will performed. Amount is always required.
+**NOTE:** The fiservTTPCardReader.refundCard API supports both 'Unmatched Tagged Refunds' and 'Open Refunds'.
 
-An unmatched tagged refund allows a merchant to issue a refund to a payment source other than the one used in the original transaction. The refund is associated with the original charge request by using the Commerce Hub transaction identifier or merchant transaction identifier. This allows the merchant to maintain the linking of the transaction information in Commerce Hub when issuing a refund or store credit.
+**Open Refund**
 
 An open refund (credit) is a refund to a card without a reference to the prior transaction.
+
+To perform an Open Refund, do not provide any reference transaction identifiers, but your merchantOrderId or merchantTransactionId can be passed as an argument.
+
 
 ```Swift
 let amount = 10.99 // amount to void
 let referenceTransactionId = "this value was returned in the charge response"
 do {
-    let refundResponse = try await fiservTTPCardReader.refundCard(amount: bankersAmount(amount: amount),
+    let refundResponse = try await fiservTTPCardReader.refundCard(amount: amount),
+                                                                  merchantTransactionId: transactionId)
+    // TODO inspect the refundResponse to see the result
+} catch let error as FiservTTPCardReaderError {
+    // TODO handle exception
+}                                                                 
+```
+
+Additional information can be found here:
+[Commerce Hub Open Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Open.md&branch=main)
+
+**Unmatched Tagged Refund**
+
+To perform an Unmatched Tagged Refund, the referenceTransactionId or the referenceMerchantTrancation must be provided. It is also acceptable to provide all values as well.
+
+An unmatched tagged refund allows a merchant to issue a refund to a payment source other than the one used in the original transaction. The refund is associated with the original charge request by using the Commerce Hub transaction identifier or merchant transaction identifier. This allows the merchant to maintain the linking of the transaction information in Commerce Hub when issuing a refund or store credit.
+
+**Unmatched Tagged Refund example:**
+```Swift
+let amount = 10.99 // amount to void
+let referenceTransactionId = "this value was returned in the charge response"
+do {
+    let refundResponse = try await fiservTTPCardReader.refundCard(amount: amount),
                                                                   referenceTransactionId: referenceTransactionId,
                                                                   referenceMerchantTransactionId: referenceMerchantTransactionId)
     // TODO inspect the refundResponse to see the result
@@ -222,11 +244,9 @@ do {
     // TODO handle exception
 }                                                                 
 ```
-Additional information can be found here:
 
+Additional information can be found here:
 [Commerce Hub Unmatched Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Unmatched.md&branch=main)
-
-[Commerce Hub Open Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Open.md&branch=main)
 
 ### Inquiry
 
@@ -245,15 +265,13 @@ do {
     // TODO handle exception
 }
 ```
-Additional information can be found here:
-
+Additional information can be found here:
 [Commerce Hub Inquiry](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Inquiry.md&branch=main)
 
 ## Download the sample app
 We've prepared an end-to-end sample app to get you up and running fast. [Get the Sample App here](https://github.com/Fiserv/TTPSampleApp)
 
 ## Additional Resources
-
 [Commerce Hub](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/Master-Data/Reference-Transaction-Details.md)
 
 [Sample App](https://github.com/Fiserv/TTPSampleApp)  

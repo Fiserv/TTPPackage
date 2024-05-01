@@ -222,7 +222,9 @@ protocol FiservTTPServicesProtocol {
                 total: Decimal,
                 currencyCode: String) async -> Result<FiservTTPChargeResponse, FiservTTPRequestError>
     
-    func refundCard(referenceTransactionId: String?,
+    func refundCard(merchantOrderId: String?,
+                    merchantTransactionId: String?,
+                    referenceTransactionId: String?,
                     referenceMerchantTransactionId: String?,
                     referenceTransactionType: String,
                     total: Decimal,
@@ -346,7 +348,9 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
                                                                 responseModel: FiservTTPChargeResponse.self)
     }
     
-    internal func refundCard(referenceTransactionId: String? = nil,
+    internal func refundCard(merchantOrderId: String? = nil,
+                             merchantTransactionId: String? = nil,
+                             referenceTransactionId: String? = nil,
                              referenceMerchantTransactionId: String? = nil,
                              referenceTransactionType: String,
                              total: Decimal,
@@ -361,7 +365,9 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
         }
         
         return await sendRequest(endpoint: refundEndpoint,
-                                 httpBody: bodyForRefundCardRequest(referenceTransactionId: referenceTransactionId,
+                                 httpBody: bodyForRefundCardRequest(merchantOrderId: merchantOrderId,
+                                                                    merchantTransactionId: merchantTransactionId,
+                                                                    referenceTransactionId: referenceTransactionId,
                                                                     referenceMerchantTransactionId: referenceMerchantTransactionId,
                                                                     referenceTransactionType: referenceTransactionType,
                                                                     total: total,
@@ -529,7 +535,9 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
         return encoded
     }
 
-    internal func bodyForRefundCardRequest(referenceTransactionId: String? = nil,
+    internal func bodyForRefundCardRequest(merchantOrderId: String? = nil,
+                                           merchantTransactionId: String? = nil,
+                                           referenceTransactionId: String? = nil,
                                            referenceMerchantTransactionId: String? = nil,
                                            referenceTransactionType: String,
                                            total: Decimal,
@@ -572,16 +580,37 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
         
         var refundCardRequest: FiservTTPRefundCardRequest
         
-        let referenceTransactionDetails = FiservTTPRefundReferenceTransactionDetails(referenceTransactionId: referenceTransactionId,
-                                                                                     referenceMerchantTransactionId: referenceMerchantTransactionId,
-                                                                                     referenceTransactionType: referenceTransactionType)
-
-        refundCardRequest = FiservTTPRefundCardRequest(amount: refundRequestAmount,
-                                                       source: source,
-                                                       referenceTransactionDetails: referenceTransactionDetails,
-                                                       transactionInteraction: transactionInteraction,
-                                                       merchantDetails: refundMerchantDetails,
-                                                       additionalDataCommon: additionalDataCommon)
+        let transactionDetails = FiservTTPRefundCardRequestTransactionDetails(captureFlag: true,
+                                                                              merchantOrderId: merchantOrderId,
+                                                                              merchantTransactionId: merchantTransactionId)
+        
+        if referenceTransactionId == nil && referenceMerchantTransactionId == nil {
+            
+            // Open Refund - No reference values should be provided
+            
+            refundCardRequest = FiservTTPRefundCardRequest(amount: refundRequestAmount,
+                                                           source: source,
+                                                           transactionDetails: transactionDetails,
+                                                           referenceTransactionDetails: nil,
+                                                           transactionInteraction: transactionInteraction,
+                                                           merchantDetails: refundMerchantDetails,
+                                                           additionalDataCommon: additionalDataCommon)
+        } else {
+            
+            // Tagged Refund Unmatched - TransID + Tap + Different Card (than original sale)
+            
+            let referenceTransactionDetails = FiservTTPRefundReferenceTransactionDetails(referenceTransactionId: referenceTransactionId,
+                                                                                         referenceMerchantTransactionId: referenceMerchantTransactionId,
+                                                                                         referenceTransactionType: referenceTransactionType)
+            
+            refundCardRequest = FiservTTPRefundCardRequest(amount: refundRequestAmount,
+                                                           source: source,
+                                                           transactionDetails: transactionDetails,
+                                                           referenceTransactionDetails: referenceTransactionDetails,
+                                                           transactionInteraction: transactionInteraction,
+                                                           merchantDetails: refundMerchantDetails,
+                                                           additionalDataCommon: additionalDataCommon)
+        }
         
         let jsonEncoder = JSONEncoder()
         
