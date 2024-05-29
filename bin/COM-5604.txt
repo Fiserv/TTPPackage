@@ -1,0 +1,30 @@
+Use Terminal
+
+	CD to Project location
+
+	1) Archive for Device
+
+		> FiservTTP % xcodebuild archive -scheme FiservTTP -destination "generic/platform=iOS" -archivePath bin/FiservTTP SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES 
+
+
+	2) Archive for Simulator
+
+	        > FiservTTP % xcodebuild archive -scheme FiservTTP -destination "generic/platform=iOS Simulator" -archivePath bin/FiservTTP-Sim SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES 
+
+
+
+
+	3) Create Framework
+
+	   > bin % xcodebuild -create-xcframework -framework ./FiservTTP.xcarchive/Products/Library/Frameworks/FiservTTP.framework -framework ./FiservTTP-Sim.xcarchive/Products/Library/Frameworks/FiservTTP.framework -output ./FiservTTP.xcframework
+
+
+	4) Create zip Archive
+		
+		compress (zip) the file FiservTTP.xcframework -> FiservTTP.xcframework.zip
+
+	5) Checksum
+
+	   > bin % swift package compute-checksum FiservTTP.xcframework.zip
+
+		2bf4eea2b002edaa46f06f058bccb37c7dafb99c2d2340a5d81e9c91aa8e8448
