@@ -244,10 +244,18 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
     private var inquiryEndpoint: FiservTTPEndpoint
     private var voidEndpoint: FiservTTPEndpoint
     private var refundEndpoint: FiservTTPEndpoint
-    
+    private let bundleIdentifier = "com.fiserv.FiservTTP"
+    private let app_name = "fiserv_ch_apple_ttp_sdk"
+    private let app_version: String
     private let config: FiservTTPConfig
     
     internal init(config: FiservTTPConfig) {
+        
+        if let version = Bundle(identifier: bundleIdentifier)?.infoDictionary?["CFBundleShortVersionString"] as? String {
+            app_version = version
+        } else {
+            app_version = "0.0.0"
+        }
         
         self.config = config
         
@@ -426,8 +434,11 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
         let posFeatures = FiservTTPChargeRequestPosFeatures(pinAuthenticationCapability: "CAN_ACCEPT_PIN",
                                                             terminalEntryCapability: "CONTACTLESS")
         
+        let posHardwareAndSoftware = FiservTTPChargeRequestPosHardwareAndSoftware(softwareApplicationName: app_name, softwareVersionNumber: app_version)
+        
         let dataEntrySource = FiservTTPChargeRequestDataEntrySource(dataEntrySource: "MOBILE_TERMINAL",
-                                                                    posFeatures: posFeatures)
+                                                                    posFeatures: posFeatures,
+                                                                    posHardwareAndSoftware: posHardwareAndSoftware)
 
         let transactionInteraction = FiservTTPChargeRequestTransactionInteraction(origin: "POS",
                                                                                   posEntryMode: "CONTACTLESS",
@@ -561,8 +572,11 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
         let posFeatures = FiservTTPRefundCardRequestPosFeatures(pinAuthenticationCapability: "CAN_ACCEPT_PIN",
                                                                 terminalEntryCapability: "CONTACTLESS")
         
+        let posHardwareAndSoftware = FiservTTPChargeRequestPosHardwareAndSoftware(softwareApplicationName: app_name, softwareVersionNumber: app_version)
+        
         let dataEntrySource = FiservTTPRefundCardRequestDataEntrySource(dataEntrySource: "MOBILE_TERMINAL",
-                                                                        posFeatures: posFeatures)
+                                                                        posFeatures: posFeatures,
+                                                                        posHardwareAndSoftware: posHardwareAndSoftware)
         
         let transactionInteraction = FiservTTPRefundCardRequestTransactionInteraction(origin: "POS",
                                                                                       posEntryMode: "CONTACTLESS",

@@ -246,10 +246,15 @@ public struct FiservTTPChargeResponseTransactionInteraction : Swift.Codable {
   public func encode(to encoder: any Swift.Encoder) throws
   public init(from decoder: any Swift.Decoder) throws
 }
+public struct FiservTTPChargeResponsePosHardwareAndSoftware : Swift.Codable {
+  public func encode(to encoder: any Swift.Encoder) throws
+  public init(from decoder: any Swift.Decoder) throws
+}
 public struct FiservTTPChargeResponseAdditionalPosInformation : Swift.Codable {
   public let stan: Swift.String?
   public let dataEntrySource: Swift.String?
   public let posFeatures: FiservTTP.FiservTTPChargeResponsePosFeatures?
+  public let posHardwareAndSoftware: FiservTTP.FiservTTPChargeResponsePosHardwareAndSoftware?
   public func encode(to encoder: any Swift.Encoder) throws
   public init(from decoder: any Swift.Decoder) throws
 }

@@ -8731,6 +8731,87 @@
       },
       {
         "kind": "TypeDecl",
+        "name": "FiservTTPChargeResponsePosHardwareAndSoftware",
+        "printedName": "FiservTTPChargeResponsePosHardwareAndSoftware",
+        "children": [
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(from:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "FiservTTPChargeResponsePosHardwareAndSoftware",
+                "printedName": "FiservTTP.FiservTTPChargeResponsePosHardwareAndSoftware",
+                "usr": "s:9FiservTTP0A39TTPChargeResponsePosHardwareAndSoftwareV"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Decoder",
+                "printedName": "Swift.Decoder",
+                "usr": "s:s7DecoderP"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:9FiservTTP0A39TTPChargeResponsePosHardwareAndSoftwareV4fromACs7Decoder_p_tKcfc",
+            "mangledName": "$s9FiservTTP0A39TTPChargeResponsePosHardwareAndSoftwareV4fromACs7Decoder_p_tKcfc",
+            "moduleName": "FiservTTP",
+            "implicit": true,
+            "throwing": true,
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "encode",
+            "printedName": "encode(to:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Encoder",
+                "printedName": "Swift.Encoder",
+                "usr": "s:s7EncoderP"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:9FiservTTP0A39TTPChargeResponsePosHardwareAndSoftwareV6encode2toys7Encoder_p_tKF",
+            "mangledName": "$s9FiservTTP0A39TTPChargeResponsePosHardwareAndSoftwareV6encode2toys7Encoder_p_tKF",
+            "moduleName": "FiservTTP",
+            "implicit": true,
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Struct",
+        "usr": "s:9FiservTTP0A39TTPChargeResponsePosHardwareAndSoftwareV",
+        "mangledName": "$s9FiservTTP0A39TTPChargeResponsePosHardwareAndSoftwareV",
+        "moduleName": "FiservTTP",
+        "declAttributes": [
+          "AccessControl"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Decodable",
+            "printedName": "Decodable",
+            "usr": "s:Se",
+            "mangledName": "$sSe"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Encodable",
+            "printedName": "Encodable",
+            "usr": "s:SE",
+            "mangledName": "$sSE"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
         "name": "FiservTTPChargeResponseAdditionalPosInformation",
         "printedName": "FiservTTPChargeResponseAdditionalPosInformation",
         "children": [
@@ -8908,6 +8989,66 @@
                 "declKind": "Accessor",
                 "usr": "s:9FiservTTP0A41TTPChargeResponseAdditionalPosInformationV11posFeaturesAA0acdfI0VSgvg",
                 "mangledName": "$s9FiservTTP0A41TTPChargeResponseAdditionalPosInformationV11posFeaturesAA0acdfI0VSgvg",
+                "moduleName": "FiservTTP",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "posHardwareAndSoftware",
+            "printedName": "posHardwareAndSoftware",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "FiservTTP.FiservTTPChargeResponsePosHardwareAndSoftware?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "FiservTTPChargeResponsePosHardwareAndSoftware",
+                    "printedName": "FiservTTP.FiservTTPChargeResponsePosHardwareAndSoftware",
+                    "usr": "s:9FiservTTP0A39TTPChargeResponsePosHardwareAndSoftwareV"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:9FiservTTP0A41TTPChargeResponseAdditionalPosInformationV22posHardwareAndSoftwareAA0acdfijK0VSgvp",
+            "mangledName": "$s9FiservTTP0A41TTPChargeResponseAdditionalPosInformationV22posHardwareAndSoftwareAA0acdfijK0VSgvp",
+            "moduleName": "FiservTTP",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "FiservTTP.FiservTTPChargeResponsePosHardwareAndSoftware?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "FiservTTPChargeResponsePosHardwareAndSoftware",
+                        "printedName": "FiservTTP.FiservTTPChargeResponsePosHardwareAndSoftware",
+                        "usr": "s:9FiservTTP0A39TTPChargeResponsePosHardwareAndSoftwareV"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:9FiservTTP0A41TTPChargeResponseAdditionalPosInformationV22posHardwareAndSoftwareAA0acdfijK0VSgvg",
+                "mangledName": "$s9FiservTTP0A41TTPChargeResponseAdditionalPosInformationV22posHardwareAndSoftwareAA0acdfijK0VSgvg",
                 "moduleName": "FiservTTP",
                 "implicit": true,
                 "accessorKind": "get"
@@ -13162,28 +13303,28 @@
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPModels.swift",
       "kind": "StringLiteral",
-      "offset": 17640,
+      "offset": 17949,
       "length": 7,
       "value": "\"total\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPModels.swift",
       "kind": "StringLiteral",
-      "offset": 17672,
+      "offset": 17981,
       "length": 10,
       "value": "\"currency\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPModels.swift",
       "kind": "StringLiteral",
-      "offset": 17640,
+      "offset": 17949,
       "length": 7,
       "value": "\"total\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPModels.swift",
       "kind": "StringLiteral",
-      "offset": 17672,
+      "offset": 17981,
       "length": 10,
       "value": "\"currency\""
     },
@@ -13428,476 +13569,504 @@
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 8947,
+      "offset": 8655,
+      "length": 22,
+      "value": "\"com.fiserv.FiservTTP\""
+    },
+    {
+      "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
+      "kind": "StringLiteral",
+      "offset": 8705,
+      "length": 25,
+      "value": "\"fiserv_ch_apple_ttp_sdk\""
+    },
+    {
+      "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
+      "kind": "StringLiteral",
+      "offset": 8945,
+      "length": 28,
+      "value": "\"CFBundleShortVersionString\""
+    },
+    {
+      "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
+      "kind": "StringLiteral",
+      "offset": 9065,
+      "length": 7,
+      "value": "\"0.0.0\""
+    },
+    {
+      "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
+      "kind": "StringLiteral",
+      "offset": 9315,
       "length": 32,
       "value": "\"\/ch\/security\/v1\/ttpcredentials\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 8981,
+      "offset": 9349,
       "length": 15,
       "value": "\"Token Request\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 9197,
+      "offset": 9565,
       "length": 25,
       "value": "\"\/ch\/payments\/v1\/charges\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 9224,
+      "offset": 9592,
       "length": 17,
       "value": "\"Charges Request\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 9445,
+      "offset": 9813,
       "length": 37,
       "value": "\"\/ch\/payments\/v1\/transaction-inquiry\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 9484,
+      "offset": 9852,
       "length": 17,
       "value": "\"Inquiry Request\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 9700,
+      "offset": 10068,
       "length": 25,
       "value": "\"\/ch\/payments\/v1\/cancels\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 9727,
+      "offset": 10095,
       "length": 14,
       "value": "\"Void Request\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 9942,
+      "offset": 10310,
       "length": 25,
       "value": "\"\/ch\/payments\/v1\/refunds\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 9969,
+      "offset": 10337,
       "length": 16,
       "value": "\"Refund Request\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 10939,
+      "offset": 11307,
       "length": 39,
       "value": "\"Payment Card data missing or corrupt.\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 15914,
+      "offset": 16282,
       "length": 39,
       "value": "\"Payment Card data missing or corrupt.\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 17962,
+      "offset": 18330,
       "length": 5,
       "value": "\"ISV\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "IntegerLiteral",
-      "offset": 18041,
+      "offset": 18409,
       "length": 6,
       "value": "172800"
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 19182,
+      "offset": 19550,
       "length": 15,
       "value": "\"AppleTapToPay\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "BooleanLiteral",
-      "offset": 19750,
+      "offset": 20118,
       "length": 4,
       "value": "true"
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 20074,
+      "offset": 20442,
       "length": 16,
       "value": "\"CAN_ACCEPT_PIN\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 20177,
+      "offset": 20545,
       "length": 13,
       "value": "\"CONTACTLESS\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 20286,
+      "offset": 20816,
       "length": 17,
       "value": "\"MOBILE_TERMINAL\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 20490,
+      "offset": 21136,
       "length": 5,
       "value": "\"POS\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 20593,
+      "offset": 21239,
       "length": 13,
       "value": "\"CONTACTLESS\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 20708,
+      "offset": 21354,
       "length": 14,
       "value": "\"CARD_PRESENT\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 20949,
+      "offset": 21595,
       "length": 8,
       "value": "\"FISERV\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 21055,
+      "offset": 21701,
       "length": 11,
       "value": "\"NASHVILLE\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 21164,
+      "offset": 21810,
       "length": 7,
       "value": "\"NORTH\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 21259,
+      "offset": 21905,
       "length": 9,
       "value": "\"PRIMARY\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 28183,
+      "offset": 28829,
       "length": 15,
       "value": "\"AppleTapToPay\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 28770,
+      "offset": 29416,
       "length": 16,
       "value": "\"CAN_ACCEPT_PIN\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 28877,
+      "offset": 29523,
       "length": 13,
       "value": "\"CONTACTLESS\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 28990,
+      "offset": 29798,
       "length": 17,
       "value": "\"MOBILE_TERMINAL\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 29210,
+      "offset": 30138,
       "length": 5,
       "value": "\"POS\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 29317,
+      "offset": 30245,
       "length": 13,
       "value": "\"CONTACTLESS\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 29436,
+      "offset": 30364,
       "length": 14,
       "value": "\"CARD_PRESENT\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 29685,
+      "offset": 30613,
       "length": 8,
       "value": "\"FISERV\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 29795,
+      "offset": 30723,
       "length": 11,
       "value": "\"NASHVILLE\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 29908,
+      "offset": 30836,
       "length": 7,
       "value": "\"NORTH\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 30007,
+      "offset": 30935,
       "length": 9,
       "value": "\"PRIMARY\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "BooleanLiteral",
-      "offset": 30410,
+      "offset": 31338,
       "length": 4,
       "value": "true"
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 33748,
+      "offset": 34676,
       "length": 13,
       "value": "\"Invalid URL\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 34400,
+      "offset": 35328,
       "length": 14,
       "value": "\"Missing Body\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 35530,
+      "offset": 36458,
       "length": 13,
       "value": "\"No Response\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "IntegerLiteral",
-      "offset": 35635,
+      "offset": 36563,
       "length": 3,
       "value": "200"
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "IntegerLiteral",
-      "offset": 35641,
+      "offset": 36569,
       "length": 3,
       "value": "299"
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 35954,
+      "offset": 36882,
       "length": 17,
       "value": "\"Decode Response\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 36299,
+      "offset": 37227,
       "length": 15,
       "value": "\"Unknown Error\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "IntegerLiteral",
-      "offset": 36551,
+      "offset": 37479,
       "length": 1,
       "value": "2"
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "IntegerLiteral",
-      "offset": 36594,
+      "offset": 37522,
       "length": 1,
       "value": "2"
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "IntegerLiteral",
-      "offset": 36648,
+      "offset": 37576,
       "length": 2,
       "value": "16"
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "FloatLiteral",
-      "offset": 36893,
+      "offset": 37821,
       "length": 6,
       "value": "1000.0"
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "IntegerLiteral",
-      "offset": 36993,
+      "offset": 37921,
       "length": 8,
       "value": "10000000"
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "IntegerLiteral",
-      "offset": 37004,
+      "offset": 37932,
       "length": 9,
       "value": "100000000"
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "IntegerLiteral",
-      "offset": 37272,
+      "offset": 38200,
       "length": 3,
       "value": "400"
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 37327,
+      "offset": 38255,
       "length": 14,
       "value": "\"Bad Request.\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "IntegerLiteral",
-      "offset": 37386,
+      "offset": 38314,
       "length": 3,
       "value": "401"
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 37441,
+      "offset": 38369,
       "length": 14,
       "value": "\"Unauthorized\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "IntegerLiteral",
-      "offset": 37500,
+      "offset": 38428,
       "length": 3,
       "value": "404"
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 37555,
+      "offset": 38483,
       "length": 11,
       "value": "\"Not Found\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "IntegerLiteral",
-      "offset": 37611,
+      "offset": 38539,
       "length": 3,
       "value": "500"
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 37666,
+      "offset": 38594,
       "length": 16,
       "value": "\"Internal Error\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "IntegerLiteral",
-      "offset": 37727,
+      "offset": 38655,
       "length": 3,
       "value": "501"
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 37782,
+      "offset": 38710,
       "length": 17,
       "value": "\"Not Implemented\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "IntegerLiteral",
-      "offset": 37844,
+      "offset": 38772,
       "length": 3,
       "value": "502"
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 37899,
+      "offset": 38827,
       "length": 13,
       "value": "\"Bad Gateway\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "IntegerLiteral",
-      "offset": 37957,
+      "offset": 38885,
       "length": 3,
       "value": "503"
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 38012,
+      "offset": 38940,
       "length": 21,
       "value": "\"Service Unavailable\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "IntegerLiteral",
-      "offset": 38078,
+      "offset": 39006,
       "length": 3,
       "value": "504"
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 38133,
+      "offset": 39061,
       "length": 17,
       "value": "\"Gateway Timeout\""
     },
     {
       "filePath": "\/Users\/richard.tilt\/Development\/Fiserv\/ch-apple-ttp\/FiservTTP\/FiservTTPServices.swift",
       "kind": "StringLiteral",
-      "offset": 38249,
+      "offset": 39177,
       "length": 18,
       "value": "\"Unexpected Error\""
     }
