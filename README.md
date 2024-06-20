@@ -12,7 +12,13 @@ By using this Package, you will *not* need to certify your app.   We have taken 
 
 
 ### Device Requirements 
-Apple Tap to Pay on iPhone requires iPhone XS or later, running iOS 16 or later
+Apple Tap to Pay on iPhone requires iPhone XS or later.
+
+| Transaction Type             | Minimum iOS Version                                                                |   
+|------------------------------|------------------------------------------------------------------------------------|
+| Credit                       | iOS 16.0                                                                           |
+| Debit                        | iOS 16.4                                                                           |
+
 
 ### Tap to Pay Entitlement
 You must request a special entitlement from Apple to enable Tap To Pay.  Log-into your Apple Developer Account and then [click here](https://developer.apple.com/contact/request/tap-to-pay-on-iphone) to request the entitlement.  In the text box titled 'PSP, enter 'Fiserv' as the value.
@@ -161,6 +167,8 @@ do {
 }
 ```
 
+**NOTE:** If the card used for the charges endpoint is PIN DEBIT, the user will see a pin entry screen after tapping the card.
+
 Additional information can be found here:
 [Commerce Hub Charges](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Charges.md&branch=main)
 
@@ -195,6 +203,8 @@ do {
     // TODO handle exception
 }
 ```
+
+**NOTE:** If using PIN DEBIT, refer to the Unmatched-Tagged Refund below.
 
 Additional information can be found here:
 [Commerce Hub Matched Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Tagged.md&branch=main)
@@ -244,6 +254,7 @@ do {
     // TODO handle exception
 }                                                                 
 ```
+**NOTE:** If the card used for the refund card endpoint is PIN DEBIT, the user will see a pin entry screen after tapping the card.
 
 Additional information can be found here:
 [Commerce Hub Unmatched Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Unmatched.md&branch=main)
