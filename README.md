@@ -12,7 +12,13 @@ By using this Package, you will *not* need to certify your app.   We have taken 
 
 
 ### Device Requirements 
-Apple Tap to Pay on iPhone requires iPhone XS or later, running iOS 16 or later
+Apple Tap to Pay on iPhone requires iPhone XS or later.
+
+| Transaction Type             | Minimum iOS Version                                                                |   
+|------------------------------|------------------------------------------------------------------------------------|
+| Credit                       | iOS 16.0                                                                           |
+| Debit                        | iOS 16.4                                                                           |
+
 
 ### Tap to Pay Entitlement
 You must request a special entitlement from Apple to enable Tap To Pay.  Log-into your Apple Developer Account and then [click here](https://developer.apple.com/contact/request/tap-to-pay-on-iphone) to request the entitlement.  In the text box titled 'PSP, enter 'Fiserv' as the value.
