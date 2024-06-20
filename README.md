@@ -161,6 +161,8 @@ do {
 }
 ```
 
+**NOTE:** If the card used for the charges endpoint is PIN DEBIT, the user will see a pin entry screen after tapping the card.
+
 Additional information can be found here:
 [Commerce Hub Charges](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Charges.md&branch=main)
 
@@ -195,6 +197,8 @@ do {
     // TODO handle exception
 }
 ```
+
+**NOTE:** If using PIN DEBIT, refer to the Unmatched-Tagged Refund below.
 
 Additional information can be found here:
 [Commerce Hub Matched Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Tagged.md&branch=main)
@@ -244,6 +248,7 @@ do {
     // TODO handle exception
 }                                                                 
 ```
+**NOTE:** If the card used for the refund card endpoint is PIN DEBIT, the user will see a pin entry screen after tapping the card.
 
 Additional information can be found here:
 [Commerce Hub Unmatched Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Unmatched.md&branch=main)

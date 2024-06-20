@@ -241,9 +241,15 @@ internal struct FiservTTPChargeRequestAdditionalDataCommonProcessor: Codable {
     let priority: String
 }
 
+internal struct FiservTTPChargeRequestPosHardwareAndSoftware: Codable {
+    let softwareApplicationName: String
+    let softwareVersionNumber: String
+}
+
 internal struct FiservTTPChargeRequestDataEntrySource: Codable {
     let dataEntrySource: String
     let posFeatures: FiservTTPChargeRequestPosFeatures
+    let posHardwareAndSoftware : FiservTTPChargeRequestPosHardwareAndSoftware
 }
 
 internal struct FiservTTPChargeRequestTransactionInteraction: Codable {
@@ -373,6 +379,7 @@ internal struct FiservTTPRefundCardRequestAdditionalDataCommonProcessor: Codable
 internal struct FiservTTPRefundCardRequestDataEntrySource: Codable {
     let dataEntrySource: String
     let posFeatures: FiservTTPRefundCardRequestPosFeatures
+    let posHardwareAndSoftware : FiservTTPChargeRequestPosHardwareAndSoftware
 }
 
 internal struct FiservTTPRefundCardRequestTransactionInteraction: Codable {
@@ -556,10 +563,16 @@ public struct FiservTTPChargeResponseTransactionInteraction: Codable {
     public let hostPosConditionCode: String?
 }
 
+public struct FiservTTPChargeResponsePosHardwareAndSoftware: Codable {
+    let softwareApplicationName: String
+    let softwareVersionNumber: String
+}
+
 public struct FiservTTPChargeResponseAdditionalPosInformation: Codable {
     public let stan: String?
     public let dataEntrySource: String?
     public let posFeatures: FiservTTPChargeResponsePosFeatures?
+    public let posHardwareAndSoftware : FiservTTPChargeResponsePosHardwareAndSoftware?
 }
 
 public struct FiservTTPChargeResponsePosFeatures: Codable {
