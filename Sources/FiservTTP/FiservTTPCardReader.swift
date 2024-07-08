@@ -132,7 +132,6 @@ public class FiservTTPCardReader {
     ///
     /// - Throws: An error of type FiservTTPCardReaderError
     ///
-    @available(iOS 16.4, *)
     public func isAccountLinked() async throws -> Bool {
         
         if let token = self.token {

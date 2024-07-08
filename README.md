@@ -16,8 +16,8 @@ Apple Tap to Pay on iPhone requires iPhone XS or later.
 
 | Transaction Type             | Minimum iOS Version                                                                |   
 |------------------------------|------------------------------------------------------------------------------------|
-| Credit                       | iOS 16.0                                                                           |
-| Debit                        | iOS 16.4                                                                           |
+| Credit                       | iOS 16.7                                                                           |
+| Debit                        | iOS 16.7                                                                           |
 
 
 ### Tap to Pay Entitlement
