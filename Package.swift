@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "FiservTTP",
     platforms: [
-            .iOS("16.4")
+            .iOS("16.7")
         ],
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
