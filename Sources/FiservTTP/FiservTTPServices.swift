@@ -111,7 +111,7 @@ internal struct FiservTTPEndpoint {
         case .QA:
             return "qa.api.fiservapps.com"
         case .Sandbox:
-            return "cert.api.fiservapps.com"
+            return "connect-cert.fiservapis.com"
         case .Cat:
             return "cat.api.fiservapps.com"
         case .Production:
@@ -254,7 +254,7 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
         if let version = Bundle(identifier: bundleIdentifier)?.infoDictionary?["CFBundleShortVersionString"] as? String {
             app_version = version
         } else {
-            app_version = "1.0.2"
+            app_version = "1.0.3"
         }
         
         self.config = config
