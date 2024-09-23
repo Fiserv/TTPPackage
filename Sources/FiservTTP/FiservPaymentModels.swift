@@ -77,12 +77,20 @@ public struct Models {
         
         public let merchantTransactionId: String?
         public let merchantOrderId: String?
+        public let merchantInvoiceNumber: String?
         public let captureFlag: Bool
+        public let createToken: Bool
         
-        public init(merchantTransactionId: String?, merchantOrderId: String?, captureFlag: Bool = true) {
+        public init(merchantTransactionId: String? = nil,
+                    merchantOrderId: String? = nil,
+                    merchantInvoiceNumber: String? = nil,
+                    captureFlag: Bool = false,
+                    createToken: Bool = false) {
             self.merchantTransactionId = merchantTransactionId
             self.merchantOrderId = merchantOrderId
+            self.merchantInvoiceNumber = merchantInvoiceNumber
             self.captureFlag = captureFlag
+            self.createToken = createToken
         }
     }
     
@@ -338,8 +346,11 @@ public struct Models {
     public struct TransactionDetailsResponse: Codable {
         public let captureFlag: Bool?
         public let transactionCaptureType: String?
+        public let authentication3DS: Bool?
+        public let processingCode: String?
         public let merchantTransactionId: String?
         public let merchantOrderId: String?
+        public let merchantInvoiceNumber: String?
         public let createToken: Bool?
         public let retrievalReferenceNumber: String?
     }
@@ -405,16 +416,18 @@ public struct Models {
     // TOKENIZE RESPONSE
     
     public struct PaymentTokenResponse: Codable {
-        public let tokenData: String
-        public let tokenSource: String
-        public let tokenResponseCode: String
-        public let tokenResponseDescription: String
+        public let tokenData: String?
+        public let tokenSource: String?
+        public let tokenResponseCode: String?
+        public let tokenResponseDescription: String?
     }
     
     public struct TokenizeCardResponse: Codable {
         public let gatewayResponse: GatewayResponse?
         public let source: SourceResponse?
         public let paymentTokens: [PaymentTokenResponse]?
+        public let cardDetails: CardDetailsResponse?
+        public let processorResponseDetails: ProcessorResponseDetailsResponse?
         public let error: ServerErrorResponse?
     }
     
@@ -632,8 +645,8 @@ public struct Models {
     }
     
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    // INQUIRY REQUEST
-    public struct InquireRequest: Codable {
+    // TRANSACTION INQUIRY REQUEST
+    public struct TransactionInquiryRequest: Codable {
         public let referenceTransactionDetails: ReferenceTransactionDetailsRequest
         public let merchantDetails: MerchantDetailsRequest
         

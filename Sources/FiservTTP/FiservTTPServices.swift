@@ -112,13 +112,13 @@ internal struct FiservTTPEndpoint {
     var host: String {
         switch self.fsconfig.environment {
         case .Int:
-            return "int.api.fiservapps.com"
+            return "connect-dev.fiservapis.com"
         case .QA:
-            return "qa.api.fiservapps.com"
+            return "connect-qa.fiservapis.com"
         case .Sandbox:
             return "connect-cert.fiservapis.com"
         case .Cat:
-            return "cat.api.fiservapps.com"
+            return "connect-uat.fiservapis.com"
         case .Production:
             return "connect.fiservapis.com"
         }
@@ -366,7 +366,7 @@ internal struct FiservTTPServices { //: FiservTTPServicesProtocol {
     }
     
     // NEW
-    internal func inquire(inquireRequest: Models.InquireRequest) async -> Result<[Models.InquireResponse], FiservTTPRequestError> {
+    internal func transactionInquiry(inquireRequest: Models.TransactionInquiryRequest) async -> Result<[Models.InquireResponse], FiservTTPRequestError> {
         
         return await sendRequest(endpoint: inquiryEndpoint,
                                  httpBody: bodyFor(inquireRequest),
@@ -682,8 +682,9 @@ internal struct FiservTTPServices { //: FiservTTPServicesProtocol {
     
     internal func bodyForChargeRequest(amount: Decimal,
                                        currencyCode: String,
-                                       merchantOrderId: String,
-                                       merchantTransactionId: String,
+                                       merchantOrderId: String? = nil,
+                                       merchantTransactionId: String? = nil,
+                                       merchantInvoiceNumber: String? = nil,
                                        paymentCardReaderId: String,
                                        generalCardData: String,
                                        paymentCardData: String,
@@ -700,7 +701,8 @@ internal struct FiservTTPServices { //: FiservTTPServicesProtocol {
         
         let transactionDetails = FiservTTPChargeRequestTransactionDetails(captureFlag: true,
                                                                           merchantOrderId: merchantOrderId,
-                                                                          merchantTransactionId: merchantTransactionId)
+                                                                          merchantTransactionId: merchantTransactionId,
+                                                                          merchantInvoiceNumber: merchantInvoiceNumber)
 
         let posFeatures = FiservTTPChargeRequestPosFeatures(pinAuthenticationCapability: "CAN_ACCEPT_PIN",
                                                             terminalEntryCapability: "CONTACTLESS")
@@ -911,6 +913,7 @@ internal struct FiservTTPServices { //: FiservTTPServicesProtocol {
 
     internal func bodyForRefundCardRequest(merchantOrderId: String? = nil,
                                            merchantTransactionId: String? = nil,
+                                           merchantInvoiceNumber: String? = nil,
                                            referenceTransactionId: String? = nil,
                                            referenceMerchantTransactionId: String? = nil,
                                            referenceTransactionType: String,
@@ -961,7 +964,8 @@ internal struct FiservTTPServices { //: FiservTTPServicesProtocol {
         
         let transactionDetails = FiservTTPRefundCardRequestTransactionDetails(captureFlag: true,
                                                                               merchantOrderId: merchantOrderId,
-                                                                              merchantTransactionId: merchantTransactionId)
+                                                                              merchantTransactionId: merchantTransactionId,
+                                                                              merchantInvoiceNumber: merchantInvoiceNumber)
         
         if referenceTransactionId == nil && referenceMerchantTransactionId == nil {
             

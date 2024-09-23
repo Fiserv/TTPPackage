@@ -48,7 +48,7 @@ extension PaymentTransactionType: CustomStringConvertible {
 }
 
 public enum RefundTransactionType {
-    case tagged
+    case matched
     case unmatched
     case open
 }
@@ -59,7 +59,7 @@ extension RefundTransactionType: CustomStringConvertible {
         switch self {
         case .open:
             return "open"
-        case .tagged:
+        case .matched:
             return "tagged"
         case .unmatched:
             return "unmatched"
@@ -278,8 +278,21 @@ public class FiservTTPCardReader {
         
     }
     
-    // TODO: NEW
+    
+    /// Use this method to perform an **Account Verification**. This will check the validity and respond if an account is valid or not
+    ///
+    /// - Parameters:
+    ///   - Models.TransactionDetailsRequest
+    ///   - Models.BillingAddressRequest
+    ///
+    /// - Returns:Models.AccountVerificationResponse
+    ///
+    /// - Throws: An error of type FiservTTPCardReaderError
+    ///
+    /// - SeeAlso: [Commerce Hub Verification](https://developer.fiserv.com/product/CommerceHub/api/?type=post&path=/payments-vas/v1/accounts/verification&branch=main&version=1.24.09)
+    ///
     public func accountVerification(transactionDetailsRequest: Models.TransactionDetailsRequest,
+                                    // TODO: paymentTokenSourceRequest: Models.PaymentTokenSourceRequest? = nil,
                                     billingAddressRequest: Models.BillingAddressRequest? = nil) async throws -> Models.AccountVerificationResponse {
         
         let title = "Account Verification"
@@ -322,7 +335,17 @@ public class FiservTTPCardReader {
         }
     }
     
-    // TODO: NEW
+    /// Use this payload to create a **Payment token** from a payment source.
+    ///
+    /// - Parameters:
+    ///    - Models.TransactionDetailsRequest
+    ///
+    /// - Returns: Models.TokenizeCardResponse
+    ///
+    /// - Throws: An error of type FiservTTPCardReaderError
+    ///
+    /// - SeeAlso: [Commerce Hub Tokenization](https://developer.fiserv.com/product/CommerceHub/api/?type=post&path=/payments-vas/v1/tokens&branch=main&version=1.24.09)
+    ///
     public func tokenizeCard(transactionDetailsRequest: Models.TransactionDetailsRequest) async throws -> Models.TokenizeCardResponse {
         
         let title = "Tokenize Card"
@@ -363,18 +386,28 @@ public class FiservTTPCardReader {
         }
     }
     
-    // TODO: NEW
-    public func inquire(referenceTransactionDetailsRequest: Models.ReferenceTransactionDetailsRequest) async throws -> [Models.InquireResponse] {
+    /// Use this method to return a **Commerce Hub transaction(s)** and their attributes based on order identifier.
+    ///
+    /// - Parameters:
+    ///    - Models.ReferenceTransactionDetailsRequest
+    ///
+    /// - Returns: Models.InquireResponse
+    ///
+    /// - Throws: An error of type FiservTTPCardReaderError
+    ///
+    /// - SeeAlso: [Commerce Hub Inquiry](https://developer.fiserv.com/product/CommerceHub/api/?type=post&path=/payments/v1/transaction-inquiry&branch=main&version=1.24.09)
+    ///
+    public func transactionInquiry(referenceTransactionDetailsRequest: Models.ReferenceTransactionDetailsRequest) async throws -> [Models.InquireResponse] {
         
-        let title = "Inquire Transaction"
+        let title = "Transaction Inquiry"
         
         let merchantDetails = Models.MerchantDetailsRequest(merchantId: self.configuration.merchantId,
                                                             terminalId: self.configuration.terminalId)
         
-        let inquireRequest = Models.InquireRequest(referenceTransactionDetails: referenceTransactionDetailsRequest,
-                                                   merchantDetails: merchantDetails)
+        let inquireRequest = Models.TransactionInquiryRequest(referenceTransactionDetails: referenceTransactionDetailsRequest,
+                                                              merchantDetails: merchantDetails)
         
-        let inquireResult = await services.inquire(inquireRequest: inquireRequest)
+        let inquireResult = await services.transactionInquiry(inquireRequest: inquireRequest)
         
         switch inquireResult {
             
@@ -420,15 +453,32 @@ public class FiservTTPCardReader {
     // REFERENCE TRANS DET (referenceTransactionId, referenceMerchantTransactionId, referenceOrderId, referenceMerchantOrderId, referenceClientRequestId)
     
     // * NOT USING Models.TransactionDetailsRequest because of captureFlag (so merchant won't make a mistake)
-    // TODO: NEW
+    
+    /// Use this method to originate a **Financial transaction** based on the captureFlag * Pre-Auth = false * Sale = true * Capture = true with a transaction identifier
+    ///
+    /// - Parameters:
+    ///   - Amount
+    ///   - PaymentTransactionType
+    ///   - Models.TransactionDetailsRequest
+    ///   - Models.ReferenceTransactionDetailsRequest
+    ///   - Models.PaymentTokenSourceRequest
+    ///
+    /// - Returns: Models.CommerceHubResponse
+    ///
+    /// - Throws: An error of type FiservTTPCardReaderError
+    ///
+    /// - SeeAlso: [Commerce Hub Charges](https://developer.fiserv.com/product/CommerceHub/api/?type=post&path=/payments/v1/charges&branch=main&version=1.24.09)
+    ///
     public func charges(amount: Decimal,
                         transactionType: PaymentTransactionType,
                         transactionDetailsRequest: Models.TransactionDetailsRequest,
-//                        merchantOrderId: String? = nil,
-//                        merchantTransactionId: String? = nil,
                         referenceTransactionDetailsRequest: Models.ReferenceTransactionDetailsRequest? = nil,
                         paymentTokenSourceRequest: Models.PaymentTokenSourceRequest? = nil) async throws -> Models.CommerceHubResponse {
                         
+        // IF PAYMENT TOKEN IS PRESENT
+        // NO CARD READ REQUIRED
+        // COM-8442
+        
         let title = "Charges"
         
         var cardReadResult: PaymentCardReadResult?
@@ -439,8 +489,50 @@ public class FiservTTPCardReader {
         
         var requiresCardRead = false
         
-        if transactionType == PaymentTransactionType.auth || transactionType == PaymentTransactionType.sale {
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        // Allow using a PaymentToken to do an AUTH
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        // Allow using a PaymentToken to do a SALE
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//        public enum PaymentTransactionType {
+//            case sale
+//            case auth
+//            case capture
+//            case paymentToken
+//        }
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        // AUTH using PAYMENT TOKEN
+        if paymentTokenSourceRequest != nil && transactionType == PaymentTransactionType.auth {
+            
+            // No CARD READ
+            
+            // No CAPTURE
+            print("AUTH using PAYMENT TOKEN")
+        }
+        
+        // AUTH with NO PAYMENT TOKEN
+        if paymentTokenSourceRequest == nil && transactionType == PaymentTransactionType.auth {
+            
+            // requires CARD READ
+            
+            // No CAPTURE
+            
             requiresCardRead = true
+            
+            print("AUTH with NO PAYMENT TOKEN")
+        }
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        
+//        if transactionType == PaymentTransactionType.auth || transactionType == PaymentTransactionType.sale {
+//            requiresCardRead = true
+//        }
+        
+        // SALE - MAY or MAY NOT USE PAYMENT TOKEN
+        if transactionType == PaymentTransactionType.sale {
+            
+            requiresCardRead = true
+            
+            print("SALE")
         }
         
         if transactionType != PaymentTransactionType.auth && transactionDetailsRequest.captureFlag == false {
@@ -455,7 +547,7 @@ public class FiservTTPCardReader {
                                            localizedDescription: NSLocalizedString("Invalid value for captureFlag, expected FALSE for PaymentTransactionType.auth.", comment: ""))
         }
         
-        // [AUTH, SALE] -> REQUIRES CARD READ
+        // [AUTH (No Token), SALE] -> REQUIRES CARD READ
         if requiresCardRead {
             
             // 1) CONFIRM CARD READER IDENTIFIER
@@ -513,7 +605,7 @@ public class FiservTTPCardReader {
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         // var handler: Result<Models.CommerceHubResponse, FiservTTPRequestError>?
         
-        if transactionType == .paymentToken {
+        if transactionType == .paymentToken || (transactionType == .auth && paymentTokenSourceRequest != nil) {
             
             let transactionInteractionRequest = Models.TransactionInteractionRequest(origin: "POS",
                                                                                      posEntryMode: "CONTACTLESS",
@@ -526,6 +618,20 @@ public class FiservTTPCardReader {
                                                                          transactionInteraction: transactionInteractionRequest,
                                                                          merchantDetails: merchantDetailsRequest)
         }
+        
+//        if transactionType == .paymentToken {
+//            
+//            let transactionInteractionRequest = Models.TransactionInteractionRequest(origin: "POS",
+//                                                                                     posEntryMode: "CONTACTLESS",
+//                                                                                     posConditionCode: "CARD_PRESENT",
+//                                                                                     additionalPosInformation: nil)
+//            
+//            paymentTokenChargeRequest = Models.PaymentTokenChargeRequest(amount: amountRequest,
+//                                                                         source: paymentTokenSourceRequest,
+//                                                                         transactionDetails: transactionDetailsRequest,
+//                                                                         transactionInteraction: transactionInteractionRequest,
+//                                                                         merchantDetails: merchantDetailsRequest)
+//        }
         
         let chargesResponse = await self.services.charges(amountRequest: amountRequest,
                                                           transactionDetailsRequest: transactionDetailsRequest,
@@ -544,7 +650,18 @@ public class FiservTTPCardReader {
         }
     }
     
-    // TODO: cancels()
+    /// Use this payload to perform a **Cancel** transaction (aka void).
+    ///
+    /// - Parameters:
+    ///   - Amount
+    ///   - Models.ReferenceTransactionDetailsRequest
+    ///
+    /// - Returns: Models.CommerceHubResponse
+    ///
+    /// - Throws: An error of type FiservTTPCardReaderError
+    ///
+    /// - SeeAlso: [Commerce Hub Cancels](https://developer.fiserv.com/product/CommerceHub/api/?type=post&path=/payments/v1/cancels&branch=main&version=1.24.09)
+    ///
     public func cancels(amount: Decimal,
                         referenceTransactionDetailsRequest: Models.ReferenceTransactionDetailsRequest) async throws -> Models.CommerceHubResponse {
         
@@ -578,11 +695,22 @@ public class FiservTTPCardReader {
     // TRANSACTION DETAILS              N           Y           Y
     // REFERENCE TRANSACTION DETAILS    Y           Y           N
     
-    // TODO: refunds()
+    /// Use this payload to perform a **Refund** transaction (aka void).
+    ///
+    /// - Parameters:
+    ///   - Amount
+    ///   - RefundTransactionType
+    ///   - Models.TransactionDetailsRequest
+    ///   - Models.ReferenceTransactionDetailsRequest
+    ///
+    /// - Returns: Models.CommerceHubResponse
+    ///
+    /// - Throws: An error of type FiservTTPCardReaderError
+    ///
+    /// - SeeAlso: [Commerce Hub Refunds](https://developer.fiserv.com/product/CommerceHub/api/?type=post&path=/payments/v1/refunds&branch=main&version=1.24.09)
+    ///
     public func refunds(amount: Decimal,
                         refundTransactionType: RefundTransactionType,
-                        // merchantOrderId: String? = nil,
-                        // merchantTransactionId: String? = nil,
                         transactionDetails: Models.TransactionDetailsRequest? = nil,
                         referenceTransactionDetails: Models.ReferenceTransactionDetailsRequest? = nil) async throws -> Models.CommerceHubResponse {
         
@@ -597,7 +725,7 @@ public class FiservTTPCardReader {
         // var requiresCardRead = false
         // var captureFlag = false
         
-        let requiresCardRead = (refundTransactionType != .tagged)
+        let requiresCardRead = (refundTransactionType != .matched)
         
 //        if (refundTransactionType != .tagged) {
             
@@ -691,6 +819,7 @@ public class FiservTTPCardReader {
     ///
     /// - Throws: An error of type FiservTTPCardReaderError
     ///
+    @available(*, deprecated, message: "This method will not be available in future versions, use the Charges method.")
     public func readCard(amount: Decimal,
                          merchantOrderId: String,
                          merchantTransactionId: String) async throws -> FiservTTPChargeResponse {
@@ -764,6 +893,7 @@ public class FiservTTPCardReader {
     ///
     /// - Throws: An error of type FiservTTPCardReaderError
     ///
+    @available(*, deprecated, message: "This method will not be available in future versions, use the Inquire method.")
     public func inquiryTransaction(referenceTransactionId: String? = nil,
                                    referenceMerchantTransactionId: String? = nil,
                                    referenceMerchantOrderId: String? = nil,
@@ -804,6 +934,7 @@ public class FiservTTPCardReader {
     ///
     /// - Throws: An error of type FiservTTPCardReaderError
     ///
+    @available(*, deprecated, message: "This method will not be available in future versions, use the Cancels method.")
     public func voidTransaction(amount: Decimal,
                                 referenceTransactionId: String? = nil,
                                 referenceMerchantTransactionId: String? = nil) async throws -> FiservTTPChargeResponse {
@@ -844,6 +975,7 @@ public class FiservTTPCardReader {
     ///
     /// - Throws: An error of type FiservTTPCardReaderError
     ///
+    @available(*, deprecated, message: "This method will not be available in future versions, use the Refunds method.")
     public func refundTransaction(amount: Decimal,
                                   referenceTransactionId: String? = nil,
                                   referenceMerchantTransactionId: String? = nil) async throws -> FiservTTPChargeResponse {
@@ -890,6 +1022,7 @@ public class FiservTTPCardReader {
     ///
     /// - Throws: An error of type FiservTTPCardReaderError
     ///
+    @available(*, deprecated, message: "This method will not be available in future versions, use the Refunds method.")
     public func refundCard(amount: Decimal,
                            merchantOrderId: String? = nil,
                            merchantTransactionId: String? = nil,

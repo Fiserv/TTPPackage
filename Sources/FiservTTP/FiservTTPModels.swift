@@ -234,8 +234,9 @@ internal struct FiservTTPChargeRequestSource: Codable {
 
 internal struct FiservTTPChargeRequestTransactionDetails: Codable {
     let captureFlag: Bool
-    let merchantOrderId: String
-    let merchantTransactionId: String
+    let merchantOrderId: String?
+    let merchantTransactionId: String?
+    let merchantInvoiceNumber: String?
 }
 
 internal struct FiservTTPChargeRequestPosFeatures: Codable {
@@ -411,6 +412,7 @@ internal struct FiservTTPRefundCardRequestTransactionDetails: Codable {
     let captureFlag: Bool
     let merchantOrderId: String?
     let merchantTransactionId: String?
+    let merchantInvoiceNumber: String?
 }
 
 internal struct FiservTTPRefundCardRequest: Codable {
@@ -588,6 +590,7 @@ public struct FiservTTPChargeResponseTransactionDetails: Codable {
     public let processingCode: String?
     public let merchantTransactionId: String?
     public let merchantOrderId: String?
+    public let merchantInvoiceNumber: String?
     public let createToken: Bool?
     public let retrievalReferenceNumber: String?
 }
