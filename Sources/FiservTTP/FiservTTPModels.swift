@@ -588,6 +588,7 @@ public struct FiservTTPChargeResponseMerchantDetails: Codable {
 
 public struct FiservTTPChargeResponseNetworkDetails: Codable {
     public let network: FiservTTPChargeResponseNetwork?
+    public let debitNetworkId: String?
     public let networkResponseCode: String?
     public let cardLevelResultCode: String?
     public let validationCode: String?
