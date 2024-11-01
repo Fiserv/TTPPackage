@@ -324,8 +324,20 @@ public class FiservTTPCardReader {
         switch accountVerificationResult {
     
         case .success(let response):
-    
-            return response
+            
+            let sourceResponse = appendGeneralCardDataToSourceResponse(generalCardData: generalCardData,
+                                                                       response: response.source)
+            
+            let appendedResponse = Models.AccountVerificationResponse(gatewayResponse: response.gatewayResponse,
+                                                                      processorResponseDetails: response.processorResponseDetails,
+                                                                      source: sourceResponse,
+                                                                      billingAddress: response.billingAddress,
+                                                                      transactionDetails: response.transactionDetails,
+                                                                      transactionInteraction: response.transactionInteraction,
+                                                                      merchantDetails: response.merchantDetails,
+                                                                      paymentTokens: response.paymentTokens,
+                                                                      error: response.error)
+            return appendedResponse
     
         case .failure(let err):
 
@@ -375,8 +387,17 @@ public class FiservTTPCardReader {
         switch tokenizeResult {
     
         case .success(let response):
-    
-            return response
+            
+            let sourceResponse = appendGeneralCardDataToSourceResponse(generalCardData: generalCardData,
+                                                                       response: response.source)
+            
+            let appendedResponse = Models.TokenizeCardResponse(gatewayResponse: response.gatewayResponse,
+                                                               source: sourceResponse,
+                                                               paymentTokens: response.paymentTokens,
+                                                               cardDetails: response.cardDetails,
+                                                               processorResponseDetails: response.processorResponseDetails,
+                                                               error: response.error)
+            return appendedResponse
     
         case .failure(let err):
             
@@ -494,13 +515,7 @@ public class FiservTTPCardReader {
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         // Allow using a PaymentToken to do a SALE
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//        public enum PaymentTransactionType {
-//            case sale
-//            case auth
-//            case capture
-//            case paymentToken
-//        }
-        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
         // AUTH using PAYMENT TOKEN
         if paymentTokenSourceRequest != nil && transactionType == PaymentTransactionType.auth {
             
@@ -513,19 +528,10 @@ public class FiservTTPCardReader {
         // AUTH with NO PAYMENT TOKEN
         if paymentTokenSourceRequest == nil && transactionType == PaymentTransactionType.auth {
             
-            // requires CARD READ
-            
-            // No CAPTURE
+            // Requires CARD READ, No CAPTURE
             
             requiresCardRead = true
-            
-            print("AUTH with NO PAYMENT TOKEN")
         }
-        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        
-//        if transactionType == PaymentTransactionType.auth || transactionType == PaymentTransactionType.sale {
-//            requiresCardRead = true
-//        }
         
         // SALE - MAY or MAY NOT USE PAYMENT TOKEN
         if transactionType == PaymentTransactionType.sale {
@@ -590,20 +596,9 @@ public class FiservTTPCardReader {
         // AMOUNT
         let amountRequest = Models.AmountRequest(total: amount, currency: self.configuration.currencyCode)
         
-        // SOURCE REQUEST INCLUDES CARD READ RESPONSE + sourceType ("AppleTapToPay") + AppleTtpMerchantId (config)
-        // ** SOURCE_REQUEST for .paymentToken is unique
-        
-        // TRANSACTION DETAILS
-//        let transactionDetailsRequest = Models.TransactionDetailsRequest(merchantTransactionId: merchantTransactionId,
-//                                                                         merchantOrderId: merchantOrderId,
-//                                                                         captureFlag: captureFlag)
-        
         // (SALE, AUTH, CAPTURE, TOKEN)
         let merchantDetailsRequest = Models.MerchantDetailsRequest(merchantId: self.configuration.merchantId,
                                                                    terminalId: self.configuration.terminalId)
-        
-        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        // var handler: Result<Models.CommerceHubResponse, FiservTTPRequestError>?
         
         if transactionType == .paymentToken || (transactionType == .auth && paymentTokenSourceRequest != nil) {
             
@@ -619,20 +614,6 @@ public class FiservTTPCardReader {
                                                                          merchantDetails: merchantDetailsRequest)
         }
         
-//        if transactionType == .paymentToken {
-//            
-//            let transactionInteractionRequest = Models.TransactionInteractionRequest(origin: "POS",
-//                                                                                     posEntryMode: "CONTACTLESS",
-//                                                                                     posConditionCode: "CARD_PRESENT",
-//                                                                                     additionalPosInformation: nil)
-//            
-//            paymentTokenChargeRequest = Models.PaymentTokenChargeRequest(amount: amountRequest,
-//                                                                         source: paymentTokenSourceRequest,
-//                                                                         transactionDetails: transactionDetailsRequest,
-//                                                                         transactionInteraction: transactionInteractionRequest,
-//                                                                         merchantDetails: merchantDetailsRequest)
-//        }
-        
         let chargesResponse = await self.services.charges(amountRequest: amountRequest,
                                                           transactionDetailsRequest: transactionDetailsRequest,
                                                           referenceTransactionDetailsRequest: referenceTransactionDetailsRequest,
@@ -642,6 +623,21 @@ public class FiservTTPCardReader {
         
         switch chargesResponse {
         case .success(let response):
+            if requiresCardRead {
+                let sourceResponse = appendGeneralCardDataToSourceResponse(generalCardData: cardVerificationResponse?.generalCardData,
+                                                                           response: response.source)
+                let commerceHubResponse = Models.CommerceHubResponse(gatewayResponse: response.gatewayResponse,
+                                                                     source: sourceResponse,
+                                                                     paymentReceipt: response.paymentReceipt,
+                                                                     transactionDetails: response.transactionDetails,
+                                                                     transactionInteraction: response.transactionInteraction,
+                                                                     merchantDetails: response.merchantDetails,
+                                                                     networkDetails: response.networkDetails,
+                                                                     cardDetails: response.cardDetails,
+                                                                     paymentTokens: response.paymentTokens,
+                                                                     error: response.error)
+                return commerceHubResponse
+            }
             return response
         case .failure(let err):
             throw FiservTTPCardReaderError(title: title,
@@ -720,36 +716,7 @@ public class FiservTTPCardReader {
         
         var cardVerificationResponse: Models.CardVerificationResponse?
         
-        var transactionDetailsRequest: Models.TransactionDetailsRequest?
-        
-        // var requiresCardRead = false
-        // var captureFlag = false
-        
         let requiresCardRead = (refundTransactionType != .matched)
-        
-//        if (refundTransactionType != .tagged) {
-            
-//            requiresCardRead = true
-            
-//            captureFlag = true
-//            
-//            transactionDetailsRequest = Models.TransactionDetailsRequest(merchantTransactionId: merchantTransactionId,
-//                                                                         merchantOrderId: merchantOrderId,
-//                                                                         captureFlag: captureFlag)
-//        }
-        
-//        if (refundTransactionType == .open) {
-//            
-//            requiresCardRead = true
-//            captureFlag = true
-//            
-//            if (referenceTransactionDetails != nil) {
-//                // Tagged Unmatched
-//                // Read
-//            } else {
-//                // Open w/Read
-//            }
-//        }
         
         if requiresCardRead {
             
@@ -791,12 +758,29 @@ public class FiservTTPCardReader {
         let amountRequest = Models.AmountRequest(total: amount, currency: self.configuration.currencyCode)
         
         let refundsResponse = await self.services.refunds(amountRequest: amountRequest,
-                                                          transactionDetailsRequest: transactionDetailsRequest,
+                                                          transactionDetailsRequest: transactionDetails,
                                                           referenceTransactionDetailsRequest: referenceTransactionDetails,
                                                           cardVerificationResponse: cardVerificationResponse)
         
         switch refundsResponse {
         case .success(let response):
+            
+            if requiresCardRead {
+                let sourceResponse = appendGeneralCardDataToSourceResponse(generalCardData: cardVerificationResponse?.generalCardData,
+                                                                           response: response.source)
+                let commerceHubResponse = Models.CommerceHubResponse(gatewayResponse: response.gatewayResponse,
+                                                                     source: sourceResponse,
+                                                                     paymentReceipt: response.paymentReceipt,
+                                                                     transactionDetails: response.transactionDetails,
+                                                                     transactionInteraction: response.transactionInteraction,
+                                                                     merchantDetails: response.merchantDetails,
+                                                                     networkDetails: response.networkDetails,
+                                                                     cardDetails: response.cardDetails,
+                                                                     paymentTokens: response.paymentTokens,
+                                                                     error: response.error)
+                return commerceHubResponse
+            }
+            
             return response
         case .failure(let err):
             throw FiservTTPCardReaderError(title: title,
@@ -815,14 +799,17 @@ public class FiservTTPCardReader {
     ///
     /// - Parameter merchantTransactionId: String
     ///
+    /// - Parameter merchantInvoiceNumber: String
+    ///
     /// - Returns:FiservTTPChargeResponse
     ///
     /// - Throws: An error of type FiservTTPCardReaderError
     ///
     @available(*, deprecated, message: "This method will not be available in future versions, use the Charges method.")
     public func readCard(amount: Decimal,
-                         merchantOrderId: String,
-                         merchantTransactionId: String) async throws -> FiservTTPChargeResponse {
+                         merchantOrderId: String? = nil,
+                         merchantTransactionId: String? = nil,
+                         merchantInvoiceNumber: String? = nil) async throws -> FiservTTPChargeResponse {
         
         let title = "Read Payment Card"
         
@@ -852,6 +839,7 @@ public class FiservTTPCardReader {
                                                      currencyCode: self.configuration.currencyCode,
                                                      merchantOrderId: merchantOrderId,
                                                      merchantTransactionId: merchantTransactionId,
+                                                     merchantInvoiceNumber: merchantInvoiceNumber,
                                                      paymentCardReaderId: readerIdentifier,
                                                      paymentCardReadResult: cardReadResult)
             
@@ -1026,6 +1014,7 @@ public class FiservTTPCardReader {
     public func refundCard(amount: Decimal,
                            merchantOrderId: String? = nil,
                            merchantTransactionId: String? = nil,
+                           merchantInvoiceNumber: String? = nil,
                            referenceTransactionId: String? = nil,
                            referenceMerchantTransactionId: String? = nil) async throws -> FiservTTPChargeResponse {
         
@@ -1055,6 +1044,7 @@ public class FiservTTPCardReader {
             
             let refundCardResult = await services.refundCard(merchantOrderId: merchantOrderId,
                                                              merchantTransactionId: merchantTransactionId,
+                                                             merchantInvoiceNumber: merchantInvoiceNumber,
                                                              referenceTransactionId: referenceTransactionId,
                                                              referenceMerchantTransactionId: referenceMerchantTransactionId,
                                                              referenceTransactionType: "CHARGES",
@@ -1085,6 +1075,17 @@ public class FiservTTPCardReader {
         }
     }
     
+    private func appendGeneralCardDataToSourceResponse(generalCardData: String?, response: Models.SourceResponse?) -> Models.SourceResponse {
+        
+        let sourceResponse = Models.SourceResponse(sourceType: response?.sourceType,
+                                                   hasBeenDecrypted: response?.hasBeenDecrypted,
+                                                   card: response?.card,
+                                                   emvData: response?.emvData,
+                                                   generalCardData: base64ToHex(generalCardData))
+        
+        return sourceResponse
+    }
+    
     private func appGeneralCardData(generalCardData: String, response: FiservTTPChargeResponse) -> FiservTTPChargeResponse {
         
         let appendedResponse = FiservTTPChargeResponse(gatewayResponse: response.gatewayResponse,
@@ -1104,9 +1105,9 @@ public class FiservTTPCardReader {
         return appendedResponse
     }
     
-    private func base64ToHex(_ base64String: String) -> String? {
+    private func base64ToHex(_ base64String: String?) -> String? {
         
-        guard let data = Data(base64Encoded: base64String) else {
+        guard let data = Data(base64Encoded: base64String ?? String()) else {
             return nil
         }
         
@@ -1147,203 +1148,3 @@ extension FiservTTPCardReader {
         return try decodeJWTPart(segments[1])
     }
 }
-
-// CHARGE CARD API
-// USAGE: AUTH, CAPTURE              // AUTH + CAPTURE = SALE
-//    public func charges(amount: Decimal,
-//                        transactionType: PaymentTransactionType,
-//                        transactionDetails: Models.TransactionDetailsRequest,
-//                        referenceTransactionDetails: Models.ReferenceTransactionDetailsRequest,
-//                        paymentToken: Models.PaymentTokensRequest? = nil) async throws {
-//
-//        let title = "Charges"
-//
-//        var needsCaptureFlag: Bool = false
-//        var needsCardRead: Bool = false
-//
-//        var cardReadResult: PaymentCardReadResult?
-//
-//        // Sale, Auth, Capture, Payment Token
-//
-//        if transactionType == PaymentTransactionType.paymentToken {
-//
-//            if paymentToken == nil {
-//
-//                throw FiservTTPCardReaderError(title: title,
-//                                               localizedDescription: NSLocalizedString("Payment Token data is required for the requested transaction type.", comment: ""))
-//            }
-//
-//            needsCaptureFlag = true
-//        }
-//        else if (transactionType == PaymentTransactionType.capture) {
-//
-//            // validate RefTransDetails
-//
-//            needsCaptureFlag = true
-//
-//            needsCardRead = true
-//        }
-//        else { // Sale, Auth
-//
-//            if transactionType == PaymentTransactionType.sale { needsCaptureFlag = true }
-//
-//            if transactionType == PaymentTransactionType.auth { needsCaptureFlag = false }
-//
-//            needsCardRead = true
-//        }
-//
-//        if needsCardRead {
-//
-//            guard let readerIdentifier = self.fiservTTPReader.readerIdentifier() else {
-//
-//                throw FiservTTPCardReaderError(title: title,
-//                                               localizedDescription: NSLocalizedString("Payment Card Reader not identified.", comment: ""))
-//            }
-//
-//            let result = try await self.fiservTTPReader.readCard(for: amount,
-//                                                                 currencyCode: self.configuration.currencyCode,
-//                                                                 transactionType: .purchase,
-//                                                                 eventHandler: { _ in
-//            })
-//
-//            do {
-//                cardReadResult = try result.get()
-//            } catch {
-//                throw FiservTTPCardReaderError(title: title,
-//                                               localizedDescription: error.localizedDescription)
-//            }
-//
-//            guard let generalCardData = cardReadResult?.generalCardData, let _ = cardReadResult?.paymentCardData else {
-//
-//                throw FiservTTPCardReaderError(title: title,
-//                                               localizedDescription: NSLocalizedString("Payment Card data missing or corrupt.", comment: ""))
-//            }
-//        }
-//
-//        // Create token: false, Capture flag: false -> AUTH
-//
-//        // Create token: false, Capture flag: true -> CAPTURE, REFUND CARD
-//
-//        // Transaction type: [purchase, refund]
-//
-//        // Apple -> PaymentCardTransactionRequest(amount, currencyCode, transactionType [purchase, refund])
-//
-//        // CH - /payments/v1/charges
-//        // REQUEST:
-//        // Amount               +
-//        // Currency Code        +
-//        // Transaction Type     +
-//        // Source               +
-//        // Transaction Details  +
-//        // Merchant Details
-//
-//        // CH RESPONSE
-//
-//        // Gateway Response
-//
-//    }
-
-//    public enum RefundTransactionType {
-//        case open
-//        case tagged
-//    }
-
-//        if transactionType == .paymentToken {
-//
-//            let transactionInteractionRequest = Models.TransactionInteractionRequest(origin: "POS",
-//                                                                                     posEntryMode: "CONTACTLESS",
-//                                                                                     posConditionCode: "CARD_PRESENT",
-//                                                                                     additionalPosInformation: nil)
-//
-//            paymentTokenChargeRequest = Models.PaymentTokenChargeRequest(amount: amountRequest,
-//                                                                         source: paymentTokenSourceRequest,
-//                                                                         transactionDetails: transactionDetailsRequest,
-//                                                                         transactionInteraction: transactionInteractionRequest,
-//                                                                         merchantDetails: merchantDetailsRequest)
-//
-//            let chargesResponse = await self.services.charges(amountRequest: amountRequest,
-//                                                              transactionDetailsRequest: transactionDetailsRequest,
-//                                                              referenceTransactionDetailsRequest: referenceTransactionDetailsRequest,
-//                                                              paymentTokenChargeRequest: paymentTokenChargeRequest,
-//                                                              cardVerificationResponse: cardVerificationResponse)
-//
-//            switch chargesResponse {
-//
-//            case .success(let response):
-//
-//                // TODO: Need GENERAL CARD DATA
-//                if requiresCardRead {
-//
-//                    // if let cardData = cardVerificationResponse?.generalCardData {
-//
-//                    // }
-//
-//                    // let appendedResponse = appGeneralCardData(generalCardData: generalCardData, response: response)
-//
-//                    // return appendedResponse
-//                }
-//
-//                print("Charges Response For PaymentType(\(transactionType.description)): \n\(response)")
-//
-//                return response
-//
-//            case .failure(let err):
-//
-//                throw FiservTTPCardReaderError(title: title,
-//                                               localizedDescription: err.localizedDescription,
-//                                               failureReason: err.failureReason)
-//            }
-//
-//        } else {
-//
-//            // Not Payment Token
-//
-//            // CAPTURE (FROM AUTH)
-//            if transactionType == .capture {
-//
-//                let captureResponse = await self.services.charges(amountRequest: amountRequest,
-//                                                                  transactionDetailsRequest: transactionDetailsRequest,
-//                                                                  referenceTransactionDetailsRequest: referenceTransactionDetailsRequest)
-//                switch captureResponse {
-//                case .success(let response):
-//                    return response
-//                case .failure(let err):
-//                    throw FiservTTPCardReaderError(title: title,
-//                                                   localizedDescription: err.localizedDescription,
-//                                                   failureReason: err.failureReason)
-//                }
-//            } else {
-//
-//                let chargesResponse = await self.services.charges(amountRequest: amountRequest,
-//                                                                  transactionDetailsRequest: transactionDetailsRequest,
-//                                                                  referenceTransactionDetailsRequest: referenceTransactionDetailsRequest,
-//                                                                  cardVerificationResponse: cardVerificationResponse)
-//
-//                switch chargesResponse {
-//
-//                case .success(let response):
-//
-//                    // TODO: Need GENERAL CARD DATA
-//                    if requiresCardRead {
-//
-//                        // if let cardData = cardVerificationResponse?.generalCardData {
-//
-//                        // }
-//
-//                        // let appendedResponse = appGeneralCardData(generalCardData: generalCardData, response: response)
-//
-//                        // return appendedResponse
-//                    }
-//
-//                    print("Charges Response For PaymentType(\(transactionType.description)): \n\(response)")
-//
-//                    return response
-//
-//                case .failure(let err):
-//
-//                    throw FiservTTPCardReaderError(title: title,
-//                                                   localizedDescription: err.localizedDescription,
-//                                                   failureReason: err.failureReason)
-//                }
-//            }
-//        }

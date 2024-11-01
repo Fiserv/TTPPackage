@@ -629,11 +629,14 @@ public struct FiservTTPChargeResponseMerchantDetails: Codable {
 
 public struct FiservTTPChargeResponseNetworkDetails: Codable {
     public let network: FiservTTPChargeResponseNetwork?
+    public let debitNetworkId: String?
     public let networkResponseCode: String?
     public let cardLevelResultCode: String?
     public let validationCode: String?
     public let transactionIdentifier: String?
 }
+
+// "networkDetails":{"network":{"network":"Visa"},"debitNetworkId":"060000"},
 
 public struct FiservTTPChargeResponseNetwork: Codable {
     public let network: String?

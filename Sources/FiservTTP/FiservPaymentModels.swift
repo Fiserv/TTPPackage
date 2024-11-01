@@ -24,11 +24,6 @@ import Foundation
 
 public struct Models {
     
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    // COMMON
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    // REQUEST
-    
     public struct DynamicDescriptorsRequest: Codable {
         public let merchantCategoryCode: String
         public let merchantName: String
@@ -146,6 +141,7 @@ public struct Models {
         public let hasBeenDecrypted: Bool?
         public let card: CardResponse?
         public let emvData: String?
+        public let generalCardData: String?
     }
     
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -218,13 +214,13 @@ public struct Models {
     public struct BillingAddressRequest: Codable {
         public let firstName: String
         public let lastName: String
-        public let addressRequest: AddressRequest?
+        public let address: AddressRequest?
         
         public init(firstName: String, lastName: String, addressRequest: AddressRequest? = nil) {
             
             self.firstName = firstName
             self.lastName = lastName
-            self.addressRequest = addressRequest
+            self.address = addressRequest
         }
     }
     
@@ -727,6 +723,7 @@ public struct Models {
     
     public struct NetworkDetailsResponse: Codable {
         public let network: NetworkResponse?
+        public let debitNetworkId: String?
         public let networkResponseCode: String?
         public let cardLevelResultCode: String?
         public let validationCode: String?

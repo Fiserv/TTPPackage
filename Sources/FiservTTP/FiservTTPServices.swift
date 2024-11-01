@@ -213,11 +213,12 @@ extension FiservTTPEndpoint {
 //    
 //    func charge(amount: Decimal,
 //                currencyCode: String,
-//                merchantOrderId: String,
-//                merchantTransactionId: String,
+//                merchantOrderId: String?,
+//                merchantTransactionId: String?,
+//                merchantInvoiceNumber: String?,
 //                paymentCardReaderId: String,
 //                paymentCardReadResult: PaymentCardReadResult) async -> Result<FiservTTPChargeResponse, FiservTTPRequestError>
-//    
+//
 //    func inquiry(referenceTransactionId: String?,
 //                 referenceMerchantTransactionId: String?,
 //                 referenceMerchantOrderId: String?,
@@ -422,8 +423,9 @@ internal struct FiservTTPServices { //: FiservTTPServicesProtocol {
     
     internal func charge(amount: Decimal,
                         currencyCode: String,
-                        merchantOrderId: String,
-                        merchantTransactionId: String,
+                        merchantOrderId: String? = nil,
+                        merchantTransactionId: String? = nil,
+                        merchantInvoiceNumber: String? = nil,
                         paymentCardReaderId: String,
                         paymentCardReadResult: PaymentCardReadResult) async -> Result<FiservTTPChargeResponse, FiservTTPRequestError> {
         
@@ -438,6 +440,7 @@ internal struct FiservTTPServices { //: FiservTTPServicesProtocol {
                                                                 currencyCode: currencyCode,
                                                                 merchantOrderId: merchantOrderId,
                                                                 merchantTransactionId: merchantTransactionId,
+                                                                merchantInvoiceNumber: merchantInvoiceNumber,
                                                                 paymentCardReaderId: paymentCardReaderId,
                                                                 generalCardData: generalCardData,
                                                                 paymentCardData: paymentCardData,
@@ -491,6 +494,7 @@ internal struct FiservTTPServices { //: FiservTTPServicesProtocol {
     
     internal func refundCard(merchantOrderId: String? = nil,
                              merchantTransactionId: String? = nil,
+                             merchantInvoiceNumber: String? = nil,
                              referenceTransactionId: String? = nil,
                              referenceMerchantTransactionId: String? = nil,
                              referenceTransactionType: String,
@@ -508,6 +512,7 @@ internal struct FiservTTPServices { //: FiservTTPServicesProtocol {
         return await sendRequest(endpoint: refundEndpoint,
                                  httpBody: bodyForRefundCardRequest(merchantOrderId: merchantOrderId,
                                                                     merchantTransactionId: merchantTransactionId,
+                                                                    merchantInvoiceNumber: merchantInvoiceNumber,
                                                                     referenceTransactionId: referenceTransactionId,
                                                                     referenceMerchantTransactionId: referenceMerchantTransactionId,
                                                                     referenceTransactionType: referenceTransactionType,
@@ -757,7 +762,6 @@ internal struct FiservTTPServices { //: FiservTTPServicesProtocol {
                                                                                      referenceClientRequestId: nil)
         
         let merchantDetails = FiservTTPInquiryMerchantDetails(tokenType: nil,
-                                                              storeId: nil,
                                                               siteId: nil,
                                                               terminalId: self.config.terminalId,
                                                               merchantId: self.config.merchantId)
