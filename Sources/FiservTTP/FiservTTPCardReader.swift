@@ -602,10 +602,20 @@ public class FiservTTPCardReader {
         
         if transactionType == .paymentToken || (transactionType == .auth && paymentTokenSourceRequest != nil) {
             
+            let posFeaturesRequest = Models.PosFeaturesRequest(pinAuthenticationCapability: "UNSPECIFIED", terminalEntryCapability: "MANUAL_ONLY")
+
+            let posHardwareAndSoftwareRequest = Models.PosHardwareAndSoftwareRequest(softwareApplicationName: self.services.app_name,
+                                                                                     softwareVersionNumber: self.services.app_version,
+                                                                                     hardwareVendorIdentifier: self.services.vendorId)
+            
+            let additionalPosInformationRequest = Models.DataEntrySourceRequest(dataEntrySource: "MOBILE_TERMINAL",
+                                                                                posFeatures: posFeaturesRequest,
+                                                                                posHardwareAndSoftware: posHardwareAndSoftwareRequest)
+            
             let transactionInteractionRequest = Models.TransactionInteractionRequest(origin: "POS",
-                                                                                     posEntryMode: "CONTACTLESS",
-                                                                                     posConditionCode: "CARD_PRESENT",
-                                                                                     additionalPosInformation: nil)
+                                                                                     posEntryMode: "MANUAL",
+                                                                                     posConditionCode: "CARD_NOT_PRESENT_F2F",
+                                                                                     additionalPosInformation: additionalPosInformationRequest)
             
             paymentTokenChargeRequest = Models.PaymentTokenChargeRequest(amount: amountRequest,
                                                                          source: paymentTokenSourceRequest,

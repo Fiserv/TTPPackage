@@ -207,51 +207,7 @@ extension FiservTTPEndpoint {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // SERVICES
 
-//protocol FiservTTPServicesProtocol {
-//    
-//    func requestSessionToken() async -> Result<FiservTTPTokenResponse, FiservTTPRequestError>
-//    
-//    func charge(amount: Decimal,
-//                currencyCode: String,
-//                merchantOrderId: String?,
-//                merchantTransactionId: String?,
-//                merchantInvoiceNumber: String?,
-//                paymentCardReaderId: String,
-//                paymentCardReadResult: PaymentCardReadResult) async -> Result<FiservTTPChargeResponse, FiservTTPRequestError>
-//
-//    func inquiry(referenceTransactionId: String?,
-//                 referenceMerchantTransactionId: String?,
-//                 referenceMerchantOrderId: String?,
-//                 referenceOrderId: String?) async -> Result<[FiservTTPChargeResponse], FiservTTPRequestError>
-//    
-//    func void(referenceTransactionId: String?,
-//              referenceMerchantTransactionId: String?,
-//              referenceTransactionType: String,
-//              total: Decimal,
-//              currencyCode: String) async -> Result<FiservTTPChargeResponse, FiservTTPRequestError>
-//    
-//    func refund(referenceTransactionId: String?,
-//                referenceMerchantTransactionId: String?,
-//                referenceTransactionType: String,
-//                total: Decimal,
-//                currencyCode: String) async -> Result<FiservTTPChargeResponse, FiservTTPRequestError>
-//    
-//    func refundCard(merchantOrderId: String?,
-//                    merchantTransactionId: String?,
-//                    referenceTransactionId: String?,
-//                    referenceMerchantTransactionId: String?,
-//                    referenceTransactionType: String,
-//                    total: Decimal,
-//                    currencyCode: String,
-//                    paymentCardReaderId: String,
-//                    paymentCardReadResult: PaymentCardReadResult) async -> Result<FiservTTPChargeResponse, FiservTTPRequestError>
-//    
-//    func sendRequest<T: Decodable>(endpoint: FiservTTPEndpoint,
-//                                   httpBody: Data?,
-//                                   responseModel: T.Type) async -> Result<T, FiservTTPRequestError>
-//}
-
-internal struct FiservTTPServices { //: FiservTTPServicesProtocol {
+internal struct FiservTTPServices {
     
     private let authenticateEndpoint: FiservTTPEndpoint
     private let accountVerificationEndpoint: FiservTTPEndpoint
@@ -263,9 +219,9 @@ internal struct FiservTTPServices { //: FiservTTPServicesProtocol {
     private var voidEndpoint: FiservTTPEndpoint
     private var refundEndpoint: FiservTTPEndpoint
     private let bundleIdentifier = "com.fiserv.FiservTTP"
-    private let app_name = "fiserv_ch_apple_ttp_sdk"
-    private let app_version: String
-    private let vendorId: String
+    internal let app_name = "fiserv_ch_apple_ttp_sdk"
+    internal let app_version: String
+    internal let vendorId: String
     private let config: FiservTTPConfig
     private let sourceTypeName = "AppleTapToPay"
     
@@ -274,7 +230,7 @@ internal struct FiservTTPServices { //: FiservTTPServicesProtocol {
         if let version = Bundle(identifier: bundleIdentifier)?.infoDictionary?["CFBundleShortVersionString"] as? String {
             app_version = version
         } else {
-            app_version = "1.0.3"
+            app_version = "1.0.5"
         }
         
         self.config = config
