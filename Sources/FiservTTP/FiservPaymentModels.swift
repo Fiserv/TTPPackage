@@ -254,11 +254,11 @@ public struct Models {
     public struct DataEntrySourceRequest: Codable {
         public let dataEntrySource: String
         public let posFeatures: PosFeaturesRequest
-        public let posHardwareAndSoftware : PosHardwareAndSoftwareRequest
+        public let posHardwareAndSoftware : PosHardwareAndSoftwareRequest?
         
-        public init(dataEntrySource: String, 
+        public init(dataEntrySource: String,
                     posFeatures: PosFeaturesRequest,
-                    posHardwareAndSoftware: PosHardwareAndSoftwareRequest) {
+                    posHardwareAndSoftware: PosHardwareAndSoftwareRequest?) {
             
             self.dataEntrySource = dataEntrySource
             self.posFeatures = posFeatures
