@@ -523,6 +523,7 @@ public class FiservTTPCardReader {
                                                        merchantDetails: response.merchantDetails,
                                                        networkDetails: response.networkDetails,
                                                        cardDetails: response.cardDetails,
+                                                       paymentTokens: response.paymentTokens,
                                                        error: response.error)
         
         return appendedResponse

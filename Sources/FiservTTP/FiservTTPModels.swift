@@ -433,6 +433,14 @@ public struct FiservTTPServerErrorError: Codable {
     public let message: String?
 }
 
+public struct FiservTTPPaymentTokenResponse: Codable {
+    
+    public let tokenData: String
+    public let tokenSource: String
+    public let tokenResponseCode: String
+    public let tokenResponseDescription: String
+}
+
 public struct FiservTTPChargeResponse: Codable {
     public let gatewayResponse: FiservTTPChargeResponseGatewayResponse?
     public let source: FiservTTPChargeResponseSource?
@@ -442,6 +450,7 @@ public struct FiservTTPChargeResponse: Codable {
     public let merchantDetails: FiservTTPChargeResponseMerchantDetails?
     public let networkDetails: FiservTTPChargeResponseNetworkDetails?
     public let cardDetails: FiservTTPChargeResponseCardDetails?
+    public let paymentTokens: [FiservTTPPaymentTokenResponse]?
     public let error: [FiservTTPServerErrorError]?
 }
 
