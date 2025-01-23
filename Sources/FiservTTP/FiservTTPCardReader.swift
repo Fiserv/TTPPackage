@@ -225,7 +225,7 @@ public class FiservTTPCardReader {
         
         let title = "Validate Payment Card"
         
-        guard let _ = self.fiservTTPReader.readerIdentifier() else {
+        guard let readerIdentifier = try await self.fiservTTPReader.readerIdentifier() else {
             
             throw FiservTTPCardReaderError(title: title,
                                            localizedDescription: NSLocalizedString("Payment Card Reader not identified.", comment: ""))
@@ -255,7 +255,7 @@ public class FiservTTPCardReader {
         
         let title = "Read Payment Card"
         
-        guard let readerIdentifier = self.fiservTTPReader.readerIdentifier() else {
+        guard let readerIdentifier = try await self.fiservTTPReader.readerIdentifier() else {
             
             throw FiservTTPCardReaderError(title: title,
                                            localizedDescription: NSLocalizedString("Payment Card Reader not identified.", comment: ""))
@@ -456,7 +456,7 @@ public class FiservTTPCardReader {
         
         let title = "Refund Payment Card"
         
-        guard let readerIdentifier = self.fiservTTPReader.readerIdentifier() else {
+        guard let readerIdentifier = try await self.fiservTTPReader.readerIdentifier() else {
             
             throw FiservTTPCardReaderError(title: title,
                                            localizedDescription: NSLocalizedString("Payment Card Reader not identified.", comment: ""))
