@@ -254,7 +254,7 @@ internal struct FiservTTPServices: FiservTTPServicesProtocol {
         if let version = Bundle(identifier: bundleIdentifier)?.infoDictionary?["CFBundleShortVersionString"] as? String {
             app_version = version
         } else {
-            app_version = "1.0.5"
+            app_version = "1.0.6"
         }
         
         self.config = config
