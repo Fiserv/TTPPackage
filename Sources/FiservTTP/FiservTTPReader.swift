@@ -43,11 +43,20 @@ internal class FiservTTPReader {
         cardReaderSession = nil
     }
     
-    internal func readerIdentifier() -> String? {
-                
+    internal func readerIdentifier() async throws -> String? {
+        
+        let title = "Reader Identifier"
+        
         if let cardReader = self.paymentCardReader {
-            return String(UInt(bitPattern: ObjectIdentifier(cardReader)))
+            
+            do {
+                return try await cardReader.readerIdentifier
+            } catch {
+                throw FiservTTPCardReaderError(title: title,
+                                               localizedDescription: NSLocalizedString("Payment Card Reader not identified.", comment: ""))
+            }
         }
+        
         return nil
     }
     
