@@ -268,8 +268,8 @@ public class FiservTTPCardReader {
         
         let title = "Validate Payment Card"
         
-        guard let _ = self.fiservTTPReader.readerIdentifier() else {
-            
+        guard let _ = try await self.fiservTTPReader.readerIdentifier() else {
+                    
             throw FiservTTPCardReaderError(title: title,
                                            localizedDescription: NSLocalizedString("Payment Card Reader not identified.", comment: ""))
         }
@@ -297,7 +297,8 @@ public class FiservTTPCardReader {
         
         let title = "Account Verification"
         
-        guard let paymentCardReaderId = self.fiservTTPReader.readerIdentifier() else {
+        guard let readerIdentifier = try await self.fiservTTPReader.readerIdentifier() else {
+                    
             throw FiservTTPCardReaderError(title: title,
                                            localizedDescription: NSLocalizedString("Payment Card Reader not identified.", comment: ""))
         }
@@ -311,14 +312,14 @@ public class FiservTTPCardReader {
                                            localizedDescription: NSLocalizedString("Payment Card data missing or corrupt.", comment: ""))
         }
         
-        let verificationResponse = Models.CardVerificationResponse(cardReaderId: paymentCardReaderId,
+        let verificationResponse = Models.CardVerificationResponse(cardReaderId: readerIdentifier,
                                                                    transactionId: response.id,
                                                                    generalCardData: generalCardData,
                                                                    paymentCardData: paymentCardData)
         
         let accountVerificationResult = await services.accountVerification(transactionDetails: transactionDetailsRequest,
                                                                            billingAddress: billingAddressRequest,
-                                                                           paymentCardReaderId: paymentCardReaderId,
+                                                                           paymentCardReaderId: readerIdentifier,
                                                                            cardVerificationResponse: verificationResponse)
 
         switch accountVerificationResult {
@@ -362,11 +363,12 @@ public class FiservTTPCardReader {
         
         let title = "Tokenize Card"
         
-        guard let paymentCardReaderId = self.fiservTTPReader.readerIdentifier() else {
+        guard let readerIdentifier = try await self.fiservTTPReader.readerIdentifier() else {
+                    
             throw FiservTTPCardReaderError(title: title,
                                            localizedDescription: NSLocalizedString("Payment Card Reader not identified.", comment: ""))
         }
-    
+        
         let response = try await self.fiservTTPReader.validateCard(currencyCode: self.configuration.currencyCode,
                                                                                reason: .lookUp)
         
@@ -376,7 +378,7 @@ public class FiservTTPCardReader {
                                            localizedDescription: NSLocalizedString("Payment Card data missing or corrupt.", comment: ""))
         }
         
-        let verificationResponse = Models.CardVerificationResponse(cardReaderId: paymentCardReaderId,
+        let verificationResponse = Models.CardVerificationResponse(cardReaderId: readerIdentifier,
                                                                    transactionId: response.id,
                                                                    generalCardData: generalCardData,
                                                                    paymentCardData: paymentCardData)
@@ -557,8 +559,8 @@ public class FiservTTPCardReader {
         if requiresCardRead {
             
             // 1) CONFIRM CARD READER IDENTIFIER
-            guard let readerIdentifier = self.fiservTTPReader.readerIdentifier() else {
-                
+            guard let readerIdentifier = try await self.fiservTTPReader.readerIdentifier() else {
+                        
                 throw FiservTTPCardReaderError(title: title,
                                                localizedDescription: NSLocalizedString("Payment Card Reader not identified.", comment: ""))
             }
@@ -731,8 +733,8 @@ public class FiservTTPCardReader {
         if requiresCardRead {
             
             // 1) CONFIRM CARD READER IDENTIFIER
-            guard let readerIdentifier = self.fiservTTPReader.readerIdentifier() else {
-                
+            guard let readerIdentifier = try await self.fiservTTPReader.readerIdentifier() else {
+                        
                 throw FiservTTPCardReaderError(title: title,
                                                localizedDescription: NSLocalizedString("Payment Card Reader not identified.", comment: ""))
             }
@@ -823,8 +825,8 @@ public class FiservTTPCardReader {
         
         let title = "Read Payment Card"
         
-        guard let readerIdentifier = self.fiservTTPReader.readerIdentifier() else {
-            
+        guard let readerIdentifier = try await self.fiservTTPReader.readerIdentifier() else {
+                    
             throw FiservTTPCardReaderError(title: title,
                                            localizedDescription: NSLocalizedString("Payment Card Reader not identified.", comment: ""))
         }
@@ -1030,8 +1032,8 @@ public class FiservTTPCardReader {
         
         let title = "Refund Payment Card"
         
-        guard let readerIdentifier = self.fiservTTPReader.readerIdentifier() else {
-            
+        guard let readerIdentifier = try await self.fiservTTPReader.readerIdentifier() else {
+                    
             throw FiservTTPCardReaderError(title: title,
                                            localizedDescription: NSLocalizedString("Payment Card Reader not identified.", comment: ""))
         }
