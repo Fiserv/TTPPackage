@@ -1,6 +1,6 @@
 //  FiservTTP
 //
-//  Copyright (c) 2022 - 2023 Fiserv, Inc.
+//  Copyright (c) 2022 - 2025 Fiserv, Inc.
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
@@ -21,6 +21,16 @@
 //  THE SOFTWARE.
 
 import Foundation
+
+extension Optional where Wrapped == String {
+    var nilIfEmpty: String? {
+        guard let strongSelf = self else {
+            return nil
+        }
+        let safeString = strongSelf.trimmingCharacters(in: .whitespacesAndNewlines)
+        return safeString.isEmpty ? nil : safeString
+    }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // ERROR WRAPPER
@@ -43,14 +53,14 @@ public struct FiservTTPErrorWrapper: Identifiable {
 public struct FiservTTPResponseWrapper: Identifiable {
     public let id: UUID
     public let title: String
-    public let response: FiservTTPChargeResponse?
-    public let responses: [FiservTTPChargeResponse]?
     
-    public init(id: UUID = UUID(), title: String, response: FiservTTPChargeResponse? = nil, responses: [FiservTTPChargeResponse]? = nil) {
+    public let responseString: String?
+    
+    public init(id: UUID = UUID(), title: String, responseString: String? = nil) {
+        
         self.id = id
         self.title = title
-        self.response = response
-        self.responses = responses
+        self.responseString = responseString
     }
 }
 
@@ -101,7 +111,7 @@ public struct FiservTTPConfig {
         self.environment = environment
         self.currencyCode = currencyCode
         self.merchantId = merchantId
-        self.appleTtpMerchantId = appleTtpMerchantId
+        self.appleTtpMerchantId = appleTtpMerchantId.nilIfEmpty
         self.merchantName = merchantName
         self.merchantCategoryCode = merchantCategoryCode
         self.terminalId = terminalId
@@ -217,8 +227,9 @@ internal struct FiservTTPChargeRequestSource: Codable {
 
 internal struct FiservTTPChargeRequestTransactionDetails: Codable {
     let captureFlag: Bool
-    let merchantOrderId: String
-    let merchantTransactionId: String
+    let merchantOrderId: String?
+    let merchantTransactionId: String?
+    let merchantInvoiceNumber: String?
 }
 
 internal struct FiservTTPChargeRequestPosFeatures: Codable {
@@ -244,6 +255,7 @@ internal struct FiservTTPChargeRequestAdditionalDataCommonProcessor: Codable {
 internal struct FiservTTPChargeRequestPosHardwareAndSoftware: Codable {
     let softwareApplicationName: String
     let softwareVersionNumber: String
+    let hardwareVendorIdentifier: String
 }
 
 internal struct FiservTTPChargeRequestDataEntrySource: Codable {
@@ -393,6 +405,7 @@ internal struct FiservTTPRefundCardRequestTransactionDetails: Codable {
     let captureFlag: Bool
     let merchantOrderId: String?
     let merchantTransactionId: String?
+    let merchantInvoiceNumber: String?
 }
 
 internal struct FiservTTPRefundCardRequest: Codable {
@@ -559,6 +572,7 @@ public struct FiservTTPChargeResponseTransactionDetails: Codable {
     public let processingCode: String?
     public let merchantTransactionId: String?
     public let merchantOrderId: String?
+    public let merchantInvoiceNumber: String?
     public let createToken: Bool?
     public let retrievalReferenceNumber: String?
 }
