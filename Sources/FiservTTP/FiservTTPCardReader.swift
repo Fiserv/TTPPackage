@@ -1,6 +1,6 @@
 //  FiservTTP
 //
-//  Copyright (c) 2022 - 2023 Fiserv, Inc.
+//  Copyright (c) 2022 - 2025 Fiserv, Inc.
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
@@ -292,41 +292,55 @@ public class FiservTTPCardReader {
     /// - SeeAlso: [Commerce Hub Verification](https://developer.fiserv.com/product/CommerceHub/api/?type=post&path=/payments-vas/v1/accounts/verification&branch=main&version=1.24.09)
     ///
     public func accountVerification(transactionDetailsRequest: Models.TransactionDetailsRequest,
-                                    // TODO: paymentTokenSourceRequest: Models.PaymentTokenSourceRequest? = nil,
-                                    billingAddressRequest: Models.BillingAddressRequest? = nil) async throws -> Models.AccountVerificationResponse {
+                                    paymentTokenSourceRequest: Models.PaymentTokenSourceRequest? = nil,
+                                        billingAddressRequest: Models.BillingAddressRequest? = nil) async throws -> Models.AccountVerificationResponse {
         
         let title = "Account Verification"
         
-        guard let readerIdentifier = try await self.fiservTTPReader.readerIdentifier() else {
-                    
-            throw FiservTTPCardReaderError(title: title,
-                                           localizedDescription: NSLocalizedString("Payment Card Reader not identified.", comment: ""))
+        // Card Reader Identifier
+        var cardReaderIdentifier: String?
+        
+        // Card Verification
+        var cardVerificationResponse: Models.CardVerificationResponse?
+        
+        // Support Account Verification using Payment Token - nil Payment Token requires card read
+        if paymentTokenSourceRequest == nil {
+            
+            // Confirm Card Reader Identifier
+            guard let readerIdentifier = try await self.fiservTTPReader.readerIdentifier() else {
+                        
+                throw FiservTTPCardReaderError(title: title,
+                                               localizedDescription: NSLocalizedString("Payment Card Reader not identified.", comment: ""))
+            }
+            
+            cardReaderIdentifier = readerIdentifier
+            
+            // Read Card
+            let response = try await self.fiservTTPReader.validateCard(currencyCode: self.configuration.currencyCode, reason: .lookUp)
+            
+            guard let generalCardData = response.generalCardData, let paymentCardData = response.paymentCardData else {
+            
+                throw FiservTTPCardReaderError(title: title,
+                                               localizedDescription: NSLocalizedString("Payment Card data missing or corrupt.", comment: ""))
+            }
+            
+            cardVerificationResponse = Models.CardVerificationResponse(cardReaderId: readerIdentifier,
+                                                                      transactionId: response.id,
+                                                                    generalCardData: generalCardData,
+                                                                    paymentCardData: paymentCardData)
         }
-        
-        let response = try await self.fiservTTPReader.validateCard(currencyCode: self.configuration.currencyCode,
-                                                                   reason: .lookUp)
-        
-        guard let generalCardData = response.generalCardData, let paymentCardData = response.paymentCardData else {
-        
-            throw FiservTTPCardReaderError(title: title,
-                                           localizedDescription: NSLocalizedString("Payment Card data missing or corrupt.", comment: ""))
-        }
-        
-        let verificationResponse = Models.CardVerificationResponse(cardReaderId: readerIdentifier,
-                                                                   transactionId: response.id,
-                                                                   generalCardData: generalCardData,
-                                                                   paymentCardData: paymentCardData)
         
         let accountVerificationResult = await services.accountVerification(transactionDetails: transactionDetailsRequest,
                                                                            billingAddress: billingAddressRequest,
-                                                                           paymentCardReaderId: readerIdentifier,
-                                                                           cardVerificationResponse: verificationResponse)
+                                                                           paymentCardReaderId: cardReaderIdentifier,
+                                                                           paymentTokenSourceRequest: paymentTokenSourceRequest,
+                                                                           cardVerificationResponse: cardVerificationResponse)
 
         switch accountVerificationResult {
     
         case .success(let response):
             
-            let sourceResponse = appendGeneralCardDataToSourceResponse(generalCardData: generalCardData,
+            let sourceResponse = appendGeneralCardDataToSourceResponse(generalCardData: cardVerificationResponse?.generalCardData,
                                                                        response: response.source)
             
             let appendedResponse = Models.AccountVerificationResponse(gatewayResponse: response.gatewayResponse,
@@ -498,10 +512,6 @@ public class FiservTTPCardReader {
                         referenceTransactionDetailsRequest: Models.ReferenceTransactionDetailsRequest? = nil,
                         paymentTokenSourceRequest: Models.PaymentTokenSourceRequest? = nil) async throws -> Models.CommerceHubResponse {
                         
-        // IF PAYMENT TOKEN IS PRESENT
-        // NO CARD READ REQUIRED
-        // COM-8442
-        
         let title = "Charges"
         
         var cardReadResult: PaymentCardReadResult?
@@ -512,35 +522,21 @@ public class FiservTTPCardReader {
         
         var requiresCardRead = false
         
-        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        // Allow using a PaymentToken to do an AUTH
-        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        // Allow using a PaymentToken to do a SALE
-        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-        // AUTH using PAYMENT TOKEN
-        if paymentTokenSourceRequest != nil && transactionType == PaymentTransactionType.auth {
-            
-            // No CARD READ
-            
-            // No CAPTURE
-            print("AUTH using PAYMENT TOKEN")
-        }
-        
-        // AUTH with NO PAYMENT TOKEN
+        // AUTH using PAYMENT TOKEN - No Card Read, No Capture
+                
+        // AUTH - NO PAYMENT TOKEN
         if paymentTokenSourceRequest == nil && transactionType == PaymentTransactionType.auth {
             
             // Requires CARD READ, No CAPTURE
-            
             requiresCardRead = true
         }
         
-        // SALE - MAY or MAY NOT USE PAYMENT TOKEN
-        if transactionType == PaymentTransactionType.sale {
+        // SALE using PAYMENT TOKEN - No Card Read
+
+        // SALE - NO PAYMENT TOKEN
+        if paymentTokenSourceRequest == nil && transactionType == PaymentTransactionType.sale {
             
             requiresCardRead = true
-            
-            print("SALE")
         }
         
         if transactionType != PaymentTransactionType.auth && transactionDetailsRequest.captureFlag == false {
@@ -578,7 +574,7 @@ public class FiservTTPCardReader {
             } catch {
                 throw FiservTTPCardReaderError(title: title, localizedDescription: error.localizedDescription)
             }
-        
+            
             guard let generalCardData = cardReadResult?.generalCardData,
                   let paymentCardData = cardReadResult?.paymentCardData,
                   let transactionId = cardReadResult?.id else {
@@ -592,8 +588,6 @@ public class FiservTTPCardReader {
                                                                        generalCardData: generalCardData,
                                                                        paymentCardData: paymentCardData)
         }
-        
-        // PREPARE FOR COMMERCE HUB
         
         // AMOUNT
         let amountRequest = Models.AmountRequest(total: amount, currency: self.configuration.currencyCode)

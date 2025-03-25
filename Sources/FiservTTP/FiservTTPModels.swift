@@ -1,6 +1,6 @@
 //  FiservTTP
 //
-//  Copyright (c) 2022 - 2023 Fiserv, Inc.
+//  Copyright (c) 2022 - 2025 Fiserv, Inc.
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
@@ -55,19 +55,12 @@ public struct FiservTTPResponseWrapper: Identifiable {
     public let title: String
     
     public let responseString: String?
-//    public let response: FiservTTPChargeResponse?
-//    public let responses: [FiservTTPChargeResponse]?
     
     public init(id: UUID = UUID(), title: String, responseString: String? = nil) {
-        
-//                response: FiservTTPChargeResponse? = nil,
-//                responses: [FiservTTPChargeResponse]? = nil) {
         
         self.id = id
         self.title = title
         self.responseString = responseString
-//        self.response = response
-//        self.responses = responses
     }
 }
 
@@ -453,23 +446,12 @@ public struct FiservTTPServerErrorError: Codable {
     public let message: String?
 }
 
-// public struct ChargesResponse: Codable {
-//     public let paymentTokens: [PaymentTokenResponse]?
-// }
-
 public struct FiservTTPPaymentTokenResponse: Codable {
     
     public let tokenData: String
     public let tokenSource: String
     public let tokenResponseCode: String
     public let tokenResponseDescription: String
-    
-//    public init(tokenData: String, tokenSource: String, tokenResponseCode: String, tokenResponseDescription: String) {
-//        self.tokenData = tokenData
-//        self.tokenSource = tokenSource
-//        self.tokenResponseCode = tokenResponseCode
-//        self.tokenResponseDescription = tokenResponseDescription
-//    }
 }
 
 public struct FiservTTPChargeResponse: Codable {
@@ -635,8 +617,6 @@ public struct FiservTTPChargeResponseNetworkDetails: Codable {
     public let validationCode: String?
     public let transactionIdentifier: String?
 }
-
-// "networkDetails":{"network":{"network":"Visa"},"debitNetworkId":"060000"},
 
 public struct FiservTTPChargeResponseNetwork: Codable {
     public let network: String?
