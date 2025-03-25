@@ -1,6 +1,6 @@
 //  FiservPaymentModels
 //
-//  Copyright (c) 2022 - 2024 Fiserv, Inc.
+//  Copyright (c) 2022 - 2025 Fiserv, Inc.
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
@@ -52,7 +52,7 @@ public struct Models {
         public let cardReaderTransactionId: String?
         public let appleTtpMerchantId: String?
         
-        public init(sourceType: String, 
+        public init(sourceType: String,
                     generalCardData: String?,
                     paymentCardData: String?,
                     cardReaderId: String?,
@@ -228,7 +228,7 @@ public struct Models {
         public let pinAuthenticationCapability: String
         public let terminalEntryCapability: String
         
-        public init(pinAuthenticationCapability: String, 
+        public init(pinAuthenticationCapability: String,
                     terminalEntryCapability: String) {
             
             self.pinAuthenticationCapability = pinAuthenticationCapability
@@ -241,7 +241,7 @@ public struct Models {
         public let softwareVersionNumber: String
         public let hardwareVendorIdentifier: String
         
-        public init(softwareApplicationName: String, 
+        public init(softwareApplicationName: String,
                     softwareVersionNumber: String,
                     hardwareVendorIdentifier: String) {
             
@@ -272,7 +272,7 @@ public struct Models {
         public let posConditionCode: String
         public let additionalPosInformation: Models.DataEntrySourceRequest?
         
-        public init(origin: String, 
+        public init(origin: String,
                     posEntryMode: String,
                     posConditionCode: String,
                     additionalPosInformation: Models.DataEntrySourceRequest?) {
@@ -292,6 +292,26 @@ public struct Models {
         public let merchantDetails: MerchantDetailsRequest
         
         public init(source: SourceRequest,
+                    transactionDetails: TransactionDetailsRequest,
+                    transactionInteraction: TransactionInteractionRequest,
+                    billingAddress: BillingAddressRequest?,
+                    merchantDetails: MerchantDetailsRequest) {
+            self.source = source
+            self.transactionDetails = transactionDetails
+            self.transactionInteraction = transactionInteraction
+            self.billingAddress = billingAddress
+            self.merchantDetails = merchantDetails
+        }
+    }
+    
+    public struct AccountVerificationTokenRequest: Codable {
+        public let source: Models.PaymentTokenSourceRequest
+        public let transactionDetails: TransactionDetailsRequest
+        public let transactionInteraction: TransactionInteractionRequest
+        public let billingAddress: BillingAddressRequest?
+        public let merchantDetails: MerchantDetailsRequest
+        
+        public init(source: Models.PaymentTokenSourceRequest,
                     transactionDetails: TransactionDetailsRequest,
                     transactionInteraction: TransactionInteractionRequest,
                     billingAddress: BillingAddressRequest?,
@@ -386,7 +406,6 @@ public struct Models {
         public let transactionInteraction: TransactionInteractionResponse?
         public let merchantDetails: MerchantDetailsResponse?
         public let paymentTokens: [PaymentTokenResponse]?
-         
         
         public let error: ServerErrorResponse?
     }
@@ -399,7 +418,7 @@ public struct Models {
         public let transactionDetails: TransactionDetailsRequest
         public let merchantDetails: MerchantDetailsRequest
         
-        public init(source: SourceRequest, 
+        public init(source: SourceRequest,
                     transactionDetails: TransactionDetailsRequest,
                     merchantDetails: MerchantDetailsRequest) {
             
@@ -433,7 +452,7 @@ public struct Models {
         public let settlementPlatform: String
         public let priority: String
         
-        public init(processorName: String, 
+        public init(processorName: String,
                     processingPlatform: String,
                     settlementPlatform: String,
                     priority: String) {
@@ -465,7 +484,7 @@ public struct Models {
         public let total: Decimal
         public let currency: String
         
-        public init(total: Decimal, 
+        public init(total: Decimal,
                     currency: String) {
             
             self.total = total
@@ -490,9 +509,9 @@ public struct Models {
         public let declineDuplicates: Bool
         public let card: PaymentTokenCardRequest
         
-        public init(sourceType: String, 
+        public init(sourceType: String,
                     tokenData: String,
-                    tokenSource: String, 
+                    tokenSource: String,
                     declineDuplicates: Bool,
                     card: PaymentTokenCardRequest) {
             
@@ -511,7 +530,7 @@ public struct Models {
         public let transactionInteraction: Models.TransactionInteractionRequest
         public let merchantDetails: Models.MerchantDetailsRequest
         
-        public init(amount: Models.AmountRequest, 
+        public init(amount: Models.AmountRequest,
                     source: Models.PaymentTokenSourceRequest?,
                     transactionDetails: Models.TransactionDetailsRequest,
                     transactionInteraction: Models.TransactionInteractionRequest,
@@ -534,7 +553,7 @@ public struct Models {
         public let transactionInteraction: Models.TransactionInteractionRequest?
         public let additionalDataCommon: AdditionalDataCommonRequest?
         
-        public init(amount: Models.AmountRequest, 
+        public init(amount: Models.AmountRequest,
                     source: Models.SourceRequest?,
                     merchantDetails: Models.MerchantDetailsRequest,
                     transactionDetails: Models.TransactionDetailsRequest,
@@ -570,7 +589,7 @@ public struct Models {
         public let merchantDetails: Models.MerchantDetailsRequest
         public let referenceTransactionDetails: Models.ReferenceTransactionDetailsRequest
         
-        public init(amount: Models.AmountRequest, 
+        public init(amount: Models.AmountRequest,
                     merchantDetails: Models.MerchantDetailsRequest,
                     referenceTransactionDetails: Models.ReferenceTransactionDetailsRequest) {
             
@@ -589,7 +608,7 @@ public struct Models {
         public let transactionInteraction: Models.TransactionInteractionRequest?
         public let additionalDataCommon: AdditionalDataCommonRequest?
         
-        public init(amount: Models.AmountRequest, 
+        public init(amount: Models.AmountRequest,
                     source: Models.SourceRequest?,
                     merchantDetails: Models.MerchantDetailsRequest,
                     transactionDetails: Models.TransactionDetailsRequest?,
@@ -646,7 +665,7 @@ public struct Models {
         public let referenceTransactionDetails: ReferenceTransactionDetailsRequest
         public let merchantDetails: MerchantDetailsRequest
         
-        public init(referenceTransactionDetails: ReferenceTransactionDetailsRequest, 
+        public init(referenceTransactionDetails: ReferenceTransactionDetailsRequest,
                     merchantDetails: MerchantDetailsRequest) {
             
             self.referenceTransactionDetails = referenceTransactionDetails

@@ -1,6 +1,6 @@
 //  FiservTTP
 //
-//  Copyright (c) 2022 - 2023 Fiserv, Inc.
+//  Copyright (c) 2022 - 2025 Fiserv, Inc.
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
@@ -227,11 +227,7 @@ internal struct FiservTTPServices {
     
     internal init(config: FiservTTPConfig) {
         
-        if let version = Bundle(identifier: bundleIdentifier)?.infoDictionary?["CFBundleShortVersionString"] as? String {
-            app_version = version
-        } else {
-            app_version = "1.0.5"
-        }
+        self.app_version = "1.0.7"
         
         self.config = config
         
@@ -293,19 +289,17 @@ internal struct FiservTTPServices {
     
     // NEW
     internal func accountVerification(transactionDetails: Models.TransactionDetailsRequest,
-                                      billingAddress: Models.BillingAddressRequest? = nil,
-                                      paymentCardReaderId: String,
-                                      cardVerificationResponse: Models.CardVerificationResponse) async -> Result <Models.AccountVerificationResponse, FiservTTPRequestError> {
-        
-        return await sendRequest(endpoint: accountVerificationEndpoint,
-                                 httpBody: bodyForAccountVerification(transactionDetails: transactionDetails,
-                                                                      billingAddress: billingAddress,
-                                                                      paymentCardReaderId: paymentCardReaderId,
-                                                                      generalCardData: cardVerificationResponse.generalCardData,
-                                                                      paymentCardData: cardVerificationResponse.paymentCardData,
-                                                                      cardReaderTransactionId: cardVerificationResponse.transactionId),
-                                         responseModel: Models.AccountVerificationResponse.self)
-        
+                                           billingAddress: Models.BillingAddressRequest? = nil,
+                                      paymentCardReaderId: String? = nil,
+                                paymentTokenSourceRequest: Models.PaymentTokenSourceRequest? = nil,
+                                 cardVerificationResponse: Models.CardVerificationResponse? = nil) async -> Result <Models.AccountVerificationResponse, FiservTTPRequestError> {
+            
+            return await sendRequest(endpoint: accountVerificationEndpoint,
+                                     httpBody: bodyForAccountVerification(transactionDetails: transactionDetails,
+                                                                          billingAddress: billingAddress,
+                                                                          cardVerificationResponse: cardVerificationResponse,
+                                                                          paymentTokenSourceRequest: paymentTokenSourceRequest),
+                                     responseModel: Models.AccountVerificationResponse.self)
     }
     
     // NEW
@@ -357,7 +351,7 @@ internal struct FiservTTPServices {
     internal func cancels(amountRequest: Models.AmountRequest,
                           referenceTransactionDetailsRequest: Models.ReferenceTransactionDetailsRequest) async -> Result<Models.CommerceHubResponse, FiservTTPRequestError> {
         
-        return await sendRequest(endpoint: cancelEndpoint, 
+        return await sendRequest(endpoint: cancelEndpoint,
                                  httpBody: bodyForCancelsRequest(amountRequest: amountRequest,
                                                                  referenceTransactionDetailsRequest: referenceTransactionDetailsRequest),
                                  responseModel: Models.CommerceHubResponse.self)
@@ -484,41 +478,80 @@ internal struct FiservTTPServices {
     // NEW
     internal func bodyForAccountVerification(transactionDetails: Models.TransactionDetailsRequest,
                                                  billingAddress: Models.BillingAddressRequest? = nil,
-                                                 paymentCardReaderId: String,
-                                                 generalCardData: String,
-                                                 paymentCardData: String,
-                                                 cardReaderTransactionId: String) -> Data? {
-            
-        let source = Models.SourceRequest(sourceType: sourceTypeName,
-                                          generalCardData: generalCardData,
-                                          paymentCardData: paymentCardData,
-                                          cardReaderId: paymentCardReaderId,
-                                          cardReaderTransactionId: cardReaderTransactionId,
-                                          appleTtpMerchantId: self.config.appleTtpMerchantId)
-
+                                       cardVerificationResponse: Models.CardVerificationResponse? = nil,
+                                      paymentTokenSourceRequest: Models.PaymentTokenSourceRequest? = nil) -> Data? {
+        
         let merchantDetails = Models.MerchantDetailsRequest(merchantId: self.config.merchantId, terminalId: self.config.terminalId)
         
-        let transactionInteraction = Models.TransactionInteractionRequest(origin: "POS", 
-                                                                          posEntryMode: "CONTACTLESS", 
-                                                                          posConditionCode: "CARD_PRESENT",
-                                                                          additionalPosInformation: nil)
-        let foo = Models.AccountVerificationRequest(source: source,
-                                                    transactionDetails: transactionDetails,
-                                                    transactionInteraction: transactionInteraction,
-                                                    billingAddress: billingAddress,
-                                                    merchantDetails: merchantDetails)
+        // (Account Verification from Card Read - Not Payment Token)
+        if cardVerificationResponse != nil {
+            
+            let posFeatures = Models.PosFeaturesRequest(pinAuthenticationCapability: "CAN_ACCEPT_PIN",
+                                                                terminalEntryCapability: "CONTACTLESS")
+            
+            let posHardwareAndSoftware = Models.PosHardwareAndSoftwareRequest(softwareApplicationName: self.app_name,
+                                                                                softwareVersionNumber: self.app_version,
+                                                                             hardwareVendorIdentifier: self.vendorId)
+            
+            let additionalPosInformationRequest = Models.DataEntrySourceRequest(dataEntrySource: "MOBILE_TERMINAL",
+                                                                                    posFeatures: posFeatures,
+                                                                         posHardwareAndSoftware: posHardwareAndSoftware)
+
+            let transactionInteraction = Models.TransactionInteractionRequest(origin: "POS",
+                                                                        posEntryMode: "CONTACTLESS",
+                                                                    posConditionCode: "CARD_PRESENT",
+                                                            additionalPosInformation: additionalPosInformationRequest)
+            
+            let sourceRequest = Models.SourceRequest(sourceType: sourceTypeName,
+                                                generalCardData: cardVerificationResponse?.generalCardData,
+                                                paymentCardData: cardVerificationResponse?.paymentCardData,
+                                                   cardReaderId: cardVerificationResponse?.cardReaderId,
+                                        cardReaderTransactionId: cardVerificationResponse?.transactionId,
+                                             appleTtpMerchantId: self.config.appleTtpMerchantId)
+            
+            let accountVerificationRequest = Models.AccountVerificationRequest(source: sourceRequest,
+                                                                               transactionDetails: transactionDetails,
+                                                                               transactionInteraction: transactionInteraction,
+                                                                               billingAddress: billingAddress,
+                                                                               merchantDetails: merchantDetails)
+            let jsonEncoder = JSONEncoder()
+
+            let encoded = try? jsonEncoder.encode(accountVerificationRequest)
+
+            return encoded
+        }
         
-        let accountVerificationRequest = Models.AccountVerificationRequest(source: source,
-                                                                           transactionDetails: transactionDetails,
-                                                                           transactionInteraction: transactionInteraction,
-                                                                           billingAddress: billingAddress,
+        // (Account Verification from Payment Token)
+        if let request = paymentTokenSourceRequest {
+            
+            let posFeaturesRequest = Models.PosFeaturesRequest(pinAuthenticationCapability: "UNSPECIFIED", terminalEntryCapability: "MANUAL_ONLY")
+
+            let posHardwareAndSoftwareRequest = Models.PosHardwareAndSoftwareRequest(softwareApplicationName: self.app_name,
+                                                                                     softwareVersionNumber: self.app_version,
+                                                                                     hardwareVendorIdentifier: self.vendorId)
+            
+            let additionalPosInformationRequest = Models.DataEntrySourceRequest(dataEntrySource: "MOBILE_TERMINAL",
+                                                                                posFeatures: posFeaturesRequest,
+                                                                                posHardwareAndSoftware: posHardwareAndSoftwareRequest)
+            
+            let transactionInteractionRequest = Models.TransactionInteractionRequest(origin: "POS",
+                                                                                     posEntryMode: "MANUAL",
+                                                                                     posConditionCode: "CARD_NOT_PRESENT_F2F",
+                                                                                     additionalPosInformation: additionalPosInformationRequest)
+            
+            let accountVerificationTokenRequest = Models.AccountVerificationTokenRequest(source: request,
+                                                                        transactionDetails: transactionDetails,
+                                                                    transactionInteraction: transactionInteractionRequest,
+                                                                            billingAddress: billingAddress,
                                                                            merchantDetails: merchantDetails)
+            let jsonEncoder = JSONEncoder()
 
-        let jsonEncoder = JSONEncoder()
+            let encoded = try? jsonEncoder.encode(accountVerificationTokenRequest)
 
-        let encoded = try? jsonEncoder.encode(accountVerificationRequest)
-
-        return encoded
+            return encoded
+        }
+        
+        return nil
     }
     
     // NEW
@@ -599,7 +632,7 @@ internal struct FiservTTPServices {
                                                      appleTtpMerchantId: self.config.appleTtpMerchantId)
         }
         
-        let posFeatures = Models.PosFeaturesRequest(pinAuthenticationCapability: "CAN_ACCEPT_PIN", 
+        let posFeatures = Models.PosFeaturesRequest(pinAuthenticationCapability: "CAN_ACCEPT_PIN",
                                                     terminalEntryCapability: "CONTACTLESS")
         
         let posHardwareAndSoftware = Models.PosHardwareAndSoftwareRequest(softwareApplicationName: self.app_name,
@@ -903,7 +936,7 @@ internal struct FiservTTPServices {
                                                                                   hardwareVendorIdentifier: self.vendorId)
         
         let dataEntrySource = FiservTTPRefundCardRequestDataEntrySource(dataEntrySource: "MOBILE_TERMINAL",
-                                                                        posFeatures: posFeatures, 
+                                                                        posFeatures: posFeatures,
                                                                         posHardwareAndSoftware: posHardwareAndSoftware)
         
         let transactionInteraction = FiservTTPRefundCardRequestTransactionInteraction(origin: "POS",
