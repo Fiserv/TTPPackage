@@ -151,108 +151,6 @@ do {
 
 **- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -**
 
-#### Account Verification
-
-```SWift
-public func accountVerification(transactionDetailsRequest: Models.TransactionDetailsRequest,
-                                paymentTokenSourceRequest: Models.PaymentTokenSourceRequest? = nil,
-                                billingAddressRequest: Models.BillingAddressRequest? = nil) async throws -> Models.AccountVerificationResponse
-```
-Use the code snippet below to perform an account verification.
-```Swift
-let usesAddress = true
-let amount = 12.04
-let createPaymentToken = true
-let merchantOrderId = "1234567890" // Unique merchant order ID
-let merchantTransactionId = "1234567890" // Unique merchant transaction ID
-let merchantInvoiceNumber = "1234567890" // Optional
-let transactionDetails = Models.TransactionDetailsRequest(
-    merchantTransactionId: merchantTransactionId,
-    merchantOrderId: merchantOrderId,
-    merchantInvoiceNumber: merchantInvoiceNumber,
-    createToken: createPaymentToken
-)
-var addressRequest: Models.AddressRequest?
-var billingAddressRequest: Models.BillingAddressRequest?
-
-if usesAddress {
-    addressRequest = Models.AddressRequest(
-        street: streetName,
-        houseNumberOrName: houseNumber,
-        city: city,
-        stateOrProvince: state,
-        postalCode: postalCode,
-        country: country
-    )
-
-    billingAddressRequest = Models.BillingAddressRequest(
-        firstName: firstName,
-        lastName: lastName,
-        addressRequest: addressRequest
-    )
-}
-
-Task {
-    do {
-        let response = try await self.fiservTTPCardReader.accountVerification(
-            transactionDetailsRequest: transactionDetails,
-            billingAddressRequest: billingAddressRequest
-        )
-
-        if response.gatewayResponse?.transactionState == "VERIFIED" {
-            // Process the response here...
-        }
-    } catch {
-        // Handle Error
-    }
-}
-```
-
-Additional information can be found here:
-[Commerce Hub Account Verification](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments_VAS/Verification.md&branch=main)
-
-
-**- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -**
-
-#### Tokenization
-
-```Swift
-public func tokenizeCard(transactionDetailsRequest: Models.TransactionDetailsRequest) async throws -> Models.TokenizeCardResponse
-```
-Use the code snippet below to tokenize a card.
-```Swift
-let merchantOrderId = "1234567890" // Unique merchant order ID
-let merchantTransactionId = "1234567890" // Unique merchant transaction ID
-let merchantInvoiceNumber = "1234567890" // Optional
-
-Task {
-    do {
-        let transactionDetailsRequest = Models.TransactionDetailsRequest(
-            merchantTransactionId: merchantTransactionId,
-            merchantOrderId: merchantOrderId,
-            merchantInvoiceNumber: merchantInvoiceNumber
-        )
-
-        let response = try await self.fiservTTPCardReader.tokenizeCard(
-            transactionDetailsRequest: transactionDetailsRequest
-        )
-
-        if response.gatewayResponse?.transactionState == "AUTHORIZED" {
-            // Process the response here...
-        }
-    } catch {
-        // Handle Error
-    }
-}
-```
-
-**NOTE:** the createToken field in the TransactionDetailsRequest does not need to be explicitly set to true.
-
-Additional information can be found here:
-[Commerce Hub Tokenization](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/Guides/Payment-Sources/Tokenization/TransAmor.md&branch=main)
-
-**- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -**
-
 #### Charges API
 
 **This API supports Authorizations, Payment Tokens, Capture, and Sale**
@@ -432,6 +330,7 @@ Additional information can be found here:
 [Commerce Hub Cancel](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Cancel.md&branch=main)
 
 **- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -**
+
 #### Refunds API
 
 **This API supports Matched, Unmatched, and Open Refunds**
@@ -558,7 +457,107 @@ Additional information can be found here:
 [Commerce Hub Open Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Open.md&branch=main)
 
 **- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -**
-### 😀 Transaction Inquiry API
+#### Account Verification
+
+```SWift
+public func accountVerification(transactionDetailsRequest: Models.TransactionDetailsRequest,
+                                paymentTokenSourceRequest: Models.PaymentTokenSourceRequest? = nil,
+                                billingAddressRequest: Models.BillingAddressRequest? = nil) async throws -> Models.AccountVerificationResponse
+```
+Use the code snippet below to perform an account verification.
+```Swift
+let usesAddress = true
+let amount = 12.04
+let createPaymentToken = true
+let merchantOrderId = "1234567890" // Unique merchant order ID
+let merchantTransactionId = "1234567890" // Unique merchant transaction ID
+let merchantInvoiceNumber = "1234567890" // Optional
+let transactionDetails = Models.TransactionDetailsRequest(
+    merchantTransactionId: merchantTransactionId,
+    merchantOrderId: merchantOrderId,
+    merchantInvoiceNumber: merchantInvoiceNumber,
+    createToken: createPaymentToken
+)
+var addressRequest: Models.AddressRequest?
+var billingAddressRequest: Models.BillingAddressRequest?
+
+if usesAddress {
+    addressRequest = Models.AddressRequest(
+        street: streetName,
+        houseNumberOrName: houseNumber,
+        city: city,
+        stateOrProvince: state,
+        postalCode: postalCode,
+        country: country
+    )
+
+    billingAddressRequest = Models.BillingAddressRequest(
+        firstName: firstName,
+        lastName: lastName,
+        addressRequest: addressRequest
+    )
+}
+
+Task {
+    do {
+        let response = try await self.fiservTTPCardReader.accountVerification(
+            transactionDetailsRequest: transactionDetails,
+            billingAddressRequest: billingAddressRequest
+        )
+
+        if response.gatewayResponse?.transactionState == "VERIFIED" {
+            // Process the response here...
+        }
+    } catch {
+        // Handle Error
+    }
+}
+```
+
+Additional information can be found here:
+[Commerce Hub Account Verification](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments_VAS/Verification.md&branch=main)
+
+**- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -**
+
+#### Tokenization
+
+```Swift
+public func tokenizeCard(transactionDetailsRequest: Models.TransactionDetailsRequest) async throws -> Models.TokenizeCardResponse
+```
+Use the code snippet below to tokenize a card.
+```Swift
+let merchantOrderId = "1234567890" // Unique merchant order ID
+let merchantTransactionId = "1234567890" // Unique merchant transaction ID
+let merchantInvoiceNumber = "1234567890" // Optional
+
+Task {
+    do {
+        let transactionDetailsRequest = Models.TransactionDetailsRequest(
+            merchantTransactionId: merchantTransactionId,
+            merchantOrderId: merchantOrderId,
+            merchantInvoiceNumber: merchantInvoiceNumber
+        )
+
+        let response = try await self.fiservTTPCardReader.tokenizeCard(
+            transactionDetailsRequest: transactionDetailsRequest
+        )
+
+        if response.gatewayResponse?.transactionState == "AUTHORIZED" {
+            // Process the response here...
+        }
+    } catch {
+        // Handle Error
+    }
+}
+```
+
+**NOTE:** the createToken field in the TransactionDetailsRequest does not need to be explicitly set to true.
+
+Additional information can be found here:
+[Commerce Hub Tokenization](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/Guides/Payment-Sources/Tokenization/TransAmor.md&branch=main)
+
+**- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -**
+#### Transaction Inquiry API
 
 To retrieve the current state of any previous transaction, an inquiry request can be submitted against the Commerce Hub transaction identifier or merchant transaction identifier.
 
