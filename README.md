@@ -153,35 +153,51 @@ do {
 
 #### Charges API
 
-**This API supports Authorizations, Payment Tokens, Capture, and Sale**
+**This API supports Sale, Authorizations, Capture, Auth with PaymentToken**
 
-```Swift
-public enum PaymentTransactionType {
-    case sale
-    case auth
-    case capture
-    case paymentToken
-}
-```
-
-```Swift
-public func charges(amount: Decimal,
-                    transactionType: PaymentTransactionType,
-                    transactionDetailsRequest: Models.TransactionDetailsRequest,
-                    referenceTransactionDetailsRequest: Models.ReferenceTransactionDetailsRequest? = nil,
-                    paymentTokenSourceRequest: Models.PaymentTokenSourceRequest? = nil) async throws -> Models.CommerceHubResponse
-```
-
-| TRANSACTION TYPE             |    SALE    |    AUTH    |  CAPTURE  |   TOKEN   |
-|------------------------------|------------|------------|-----------|-----------|
-| READ CARD                    |      Y     |      Y     |     N     |     N     |
-| CAPTURE FLAG                 |      T     |      F     |     T     |     T     |
-| TRANSACTION DETAILS          |      Y     |      Y     |     Y     |     Y     |
-| REF TRANS DETAILS            |      N     |      N     |     O     |     N     |
+| Request Parameters           |    SALE    |    AUTH    |  CAPTURE  |   PAYMENT TOKEN |
+|------------------------------|------------|------------|-----------|-----------------|
+| PaymentTransactionType       |    sale    |    auth    |  capture  |  paymentToken   |
+| transactionDetails           |     Y      |     Y      |    Y      |     Y           |
+| referenceTransactionDetails  |     N      |     N      |    Y      |     N           |
 
 **OPTIONAL -> Reference Transaction Details + Capture must be from a previous Authorization**
 
 **TransactionDetailsRequest.createToken can be true for any PaymentTransactionType -requires Merchant configuration**
+
+Use the code snippet below to perform a sale transaction.
+
+```Swift
+let amount = 12.04
+let createPaymentToken = true
+let merchantOrderId = "1234567890" // Unique merchant order ID
+let merchantTransactionId = "1234567890" // Unique merchant transaction ID
+let merchantInvoiceNumber = "1234567890" // Optional
+let transactionType = PaymentTransactionType.sale
+let transactionDetails = Models.TransactionDetailsRequest(
+    merchantTransactionId: merchantTransactionId,
+    merchantOrderId: merchantOrderId,
+    merchantInvoiceNumber: merchantInvoiceNumber,
+    createToken: createPaymentToken
+)
+
+Task {
+    do {
+        let response = try await self.fiservTTPCardReader.charges(
+            amount: bankersAmount(amount: amount),
+            transactionType: transactionType,
+            transactionDetailsRequest: transactionDetails
+        )
+
+        // Transaction response
+        if response.gatewayResponse?.transactionState == "CAPTURED" {
+            // Process the response here...
+        }
+    } catch {
+        // Handle Error
+    }
+}
+```
 
 Use the code snippet below to perform an authorization (pre-authorization) transaction. A subsequent capture transaction is required to settle the authorization.
 
@@ -219,7 +235,7 @@ Task {
 }
 ```
 
-Use the code snippet below to perform a cancel (void) transaction using a referenceTransactionId.
+Use the code snippet below to perform a capture transaction using a referenceTransactionId.
 At least one reference transaction identifier must be provided to perform a capture.
 
 ```Swift
@@ -242,40 +258,6 @@ Task {
             transactionType: transactionType,
             transactionDetailsRequest: transactionDetails,
             referenceTransactionDetailsRequest: referenceTransactionDetails
-        )
-
-        // Transaction response
-        if response.gatewayResponse?.transactionState == "CAPTURED" {
-            // Process the response here...
-        }
-    } catch {
-        // Handle Error
-    }
-}
-```
-
-Use the code snippet below to perform a sale transaction.
-
-```Swift
-let amount = 12.04
-let createPaymentToken = true
-let merchantOrderId = "1234567890" // Unique merchant order ID
-let merchantTransactionId = "1234567890" // Unique merchant transaction ID
-let merchantInvoiceNumber = "1234567890" // Optional
-let transactionType = PaymentTransactionType.sale
-let transactionDetails = Models.TransactionDetailsRequest(
-    merchantTransactionId: merchantTransactionId,
-    merchantOrderId: merchantOrderId,
-    merchantInvoiceNumber: merchantInvoiceNumber,
-    createToken: createPaymentToken
-)
-
-Task {
-    do {
-        let response = try await self.fiservTTPCardReader.charges(
-            amount: bankersAmount(amount: amount),
-            transactionType: transactionType,
-            transactionDetailsRequest: transactionDetails
         )
 
         // Transaction response
@@ -350,12 +332,11 @@ public func refunds(amount: Decimal,
                     referenceTransactionDetails: Models.ReferenceTransactionDetailsRequest? = nil) async throws -> Models.CommerceHubResponse
 ```
 
-| TRANSACTION TYPE             |    MATCHED    |   UNMATCHED   |    OPEN    |
+| Request Parameters           |    MATCHED    |   UNMATCHED   |    OPEN    |
 |------------------------------|---------------|---------------|------------|
-| READ CARD                    |      N        |      Y        |     Y      |
-| CAPTURE FLAG                 |      F        |      T        |     T      |
-| TRANSACTION DETAILS          |      N        |      Y        |     Y      |
-| REF TRANS DETAILS            |      Y        |      Y        |     N      |
+| RefundTransactionType        |   matched     |   unmatched   |    open    |
+| transactionDetails           |      N        |      Y        |     Y      |
+| referenceTransactionDetails  |      Y        |      Y        |     N      |
 
 
 Use the code snippet below to perform a matched (tagged) refund transaction using a referenceTransactionId.
