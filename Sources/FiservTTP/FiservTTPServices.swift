@@ -283,7 +283,7 @@ internal struct FiservTTPServices {
         let jsonEncoder = JSONEncoder()
 
         let encoded = try? jsonEncoder.encode(value)
-        print("Http Body: \(String(data: encoded!, encoding: .utf8) ?? "")")
+        
         return encoded
     }
     
@@ -483,24 +483,24 @@ internal struct FiservTTPServices {
         
         let merchantDetails = Models.MerchantDetailsRequest(merchantId: self.config.merchantId, terminalId: self.config.terminalId)
         
-        let posFeatures = Models.PosFeaturesRequest(pinAuthenticationCapability: "CAN_ACCEPT_PIN",
-                                                            terminalEntryCapability: "CONTACTLESS")
-        
-        let posHardwareAndSoftware = Models.PosHardwareAndSoftwareRequest(softwareApplicationName: self.app_name,
-                                                                            softwareVersionNumber: self.app_version,
-                                                                         hardwareVendorIdentifier: self.vendorId)
-        
-        let additionalPosInformationRequest = Models.DataEntrySourceRequest(dataEntrySource: "MOBILE_TERMINAL",
-                                                                                posFeatures: posFeatures,
-                                                                     posHardwareAndSoftware: posHardwareAndSoftware)
-
-        let transactionInteraction = Models.TransactionInteractionRequest(origin: "POS",
-                                                                    posEntryMode: "CONTACTLESS",
-                                                                posConditionCode: "CARD_PRESENT",
-                                                        additionalPosInformation: additionalPosInformationRequest)
-        
         // (Account Verification from Card Read - Not Payment Token)
         if cardVerificationResponse != nil {
+            
+            let posFeatures = Models.PosFeaturesRequest(pinAuthenticationCapability: "CAN_ACCEPT_PIN",
+                                                                terminalEntryCapability: "CONTACTLESS")
+            
+            let posHardwareAndSoftware = Models.PosHardwareAndSoftwareRequest(softwareApplicationName: self.app_name,
+                                                                                softwareVersionNumber: self.app_version,
+                                                                             hardwareVendorIdentifier: self.vendorId)
+            
+            let additionalPosInformationRequest = Models.DataEntrySourceRequest(dataEntrySource: "MOBILE_TERMINAL",
+                                                                                    posFeatures: posFeatures,
+                                                                         posHardwareAndSoftware: posHardwareAndSoftware)
+
+            let transactionInteraction = Models.TransactionInteractionRequest(origin: "POS",
+                                                                        posEntryMode: "CONTACTLESS",
+                                                                    posConditionCode: "CARD_PRESENT",
+                                                            additionalPosInformation: additionalPosInformationRequest)
             
             let sourceRequest = Models.SourceRequest(sourceType: sourceTypeName,
                                                 generalCardData: cardVerificationResponse?.generalCardData,
@@ -521,11 +521,27 @@ internal struct FiservTTPServices {
             return encoded
         }
         
+        // (Account Verification from Payment Token)
         if let request = paymentTokenSourceRequest {
-                        
+            
+            let posFeaturesRequest = Models.PosFeaturesRequest(pinAuthenticationCapability: "UNSPECIFIED", terminalEntryCapability: "MANUAL_ONLY")
+
+            let posHardwareAndSoftwareRequest = Models.PosHardwareAndSoftwareRequest(softwareApplicationName: self.app_name,
+                                                                                     softwareVersionNumber: self.app_version,
+                                                                                     hardwareVendorIdentifier: self.vendorId)
+            
+            let additionalPosInformationRequest = Models.DataEntrySourceRequest(dataEntrySource: "MOBILE_TERMINAL",
+                                                                                posFeatures: posFeaturesRequest,
+                                                                                posHardwareAndSoftware: posHardwareAndSoftwareRequest)
+            
+            let transactionInteractionRequest = Models.TransactionInteractionRequest(origin: "POS",
+                                                                                     posEntryMode: "MANUAL",
+                                                                                     posConditionCode: "CARD_NOT_PRESENT_F2F",
+                                                                                     additionalPosInformation: additionalPosInformationRequest)
+            
             let accountVerificationTokenRequest = Models.AccountVerificationTokenRequest(source: request,
                                                                         transactionDetails: transactionDetails,
-                                                                    transactionInteraction: transactionInteraction,
+                                                                    transactionInteraction: transactionInteractionRequest,
                                                                             billingAddress: billingAddress,
                                                                            merchantDetails: merchantDetails)
             let jsonEncoder = JSONEncoder()
@@ -654,7 +670,7 @@ internal struct FiservTTPServices {
         let jsonEncoder = JSONEncoder()
 
         let encoded = try? jsonEncoder.encode(chargeRequest)
-        print("Body For Charges Request: \(String(data: encoded!, encoding: .utf8) ?? "")")
+        
         return encoded
     }
     
@@ -834,7 +850,7 @@ internal struct FiservTTPServices {
         let jsonEncoder = JSONEncoder()
 
         let encoded = try? jsonEncoder.encode(refundsRequest)
-        print("Body For Refunds Request: \(String(data: encoded!, encoding: .utf8) ?? "")")
+        
         return encoded
     }
     
@@ -1010,7 +1026,7 @@ internal struct FiservTTPServices {
         guard let body = httpBody else {
             return .failure(FiservTTPRequestError(message: "Missing Body"))
         }
-        print("Request Body:\(String(data: body, encoding: .utf8) ?? "")")
+        
         request.httpBody = body
         
         let bodyString = String(decoding: body, as: UTF8.self)
@@ -1032,7 +1048,7 @@ internal struct FiservTTPServices {
         do {
             
             let (data, response) = try await URLSession.shared.data(for: request)
-            print("Raw: \(String(data: data, encoding: .utf8) ?? "")")
+            
             guard let response = response as? HTTPURLResponse else {
                 return .failure(FiservTTPRequestError(message: "No Response"))
             }
@@ -1045,20 +1061,13 @@ internal struct FiservTTPServices {
                     return .success(decoded)
                     
                 } catch let DecodingError.dataCorrupted(context) {
-                    print(context)
-                    return .failure(FiservTTPRequestError(message: "Decode Response", failureReason: ""))
+                    return .failure(FiservTTPRequestError(message: "Decode Response", failureReason: "dataCorrupted"))
                 } catch let DecodingError.keyNotFound(key, context) {
-                    print("Key '\(key)' not found:", context.debugDescription)
-                    print("codingPath:", context.codingPath)
-                    return .failure(FiservTTPRequestError(message: "Decode Response", failureReason: ""))
+                    return .failure(FiservTTPRequestError(message: "Decode Response", failureReason: "keyNotFound"))
                 } catch let DecodingError.valueNotFound(value, context) {
-                    print("Value '\(value)' not found:", context.debugDescription)
-                    print("codingPath:", context.codingPath)
-                    return .failure(FiservTTPRequestError(message: "Decode Response", failureReason: ""))
+                    return .failure(FiservTTPRequestError(message: "Decode Response", failureReason: "valueNotFound"))
                 } catch let DecodingError.typeMismatch(type, context)  {
-                    print("Type '\(type)' mismatch:", context.debugDescription)
-                    print("codingPath:", context.codingPath)
-                    return .failure(FiservTTPRequestError(message: "Decode Response", failureReason: ""))
+                    return .failure(FiservTTPRequestError(message: "Decode Response", failureReason: "typeMismatch"))
                 } catch {
                     return .failure(FiservTTPRequestError(message: "Decode Response", failureReason: error.localizedDescription))
                 }

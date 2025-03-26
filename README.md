@@ -151,18 +151,61 @@ do {
 
 **- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -**
 
-### 😀 Account Verification API
-
-**INTERNAL NOTE ONLY**
-
-**CommerceHub supports paymentToken for Account Verification**
-
-**Need to know if we should support it here**
+#### Account Verification
 
 ```SWift
 public func accountVerification(transactionDetailsRequest: Models.TransactionDetailsRequest,
                                 paymentTokenSourceRequest: Models.PaymentTokenSourceRequest? = nil,
                                 billingAddressRequest: Models.BillingAddressRequest? = nil) async throws -> Models.AccountVerificationResponse
+```
+Use the code snippet below to perform an account verification.
+```Swift
+let usesAddress = true
+let amount = 12.04
+let createPaymentToken = true
+let merchantOrderId = "1234567890" // Unique merchant order ID
+let merchantTransactionId = "1234567890" // Unique merchant transaction ID
+let merchantInvoiceNumber = "1234567890" // Optional
+let transactionDetails = Models.TransactionDetailsRequest(
+    merchantTransactionId: merchantTransactionId,
+    merchantOrderId: merchantOrderId,
+    merchantInvoiceNumber: merchantInvoiceNumber,
+    createToken: createPaymentToken
+)
+var addressRequest: Models.AddressRequest?
+var billingAddressRequest: Models.BillingAddressRequest?
+
+if usesAddress {
+    addressRequest = Models.AddressRequest(
+        street: streetName,
+        houseNumberOrName: houseNumber,
+        city: city,
+        stateOrProvince: state,
+        postalCode: postalCode,
+        country: country
+    )
+
+    billingAddressRequest = Models.BillingAddressRequest(
+        firstName: firstName,
+        lastName: lastName,
+        addressRequest: addressRequest
+    )
+}
+
+Task {
+    do {
+        let response = try await self.fiservTTPCardReader.accountVerification(
+            transactionDetailsRequest: transactionDetails,
+            billingAddressRequest: billingAddressRequest
+        )
+
+        if response.gatewayResponse?.transactionState == "VERIFIED" {
+            // Process the response here...
+        }
+    } catch {
+        // Handle Error
+    }
+}
 ```
 
 Additional information can be found here:
@@ -171,10 +214,36 @@ Additional information can be found here:
 
 **- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -**
 
-### 😀 Tokenization API
+#### Tokenization
 
 ```Swift
 public func tokenizeCard(transactionDetailsRequest: Models.TransactionDetailsRequest) async throws -> Models.TokenizeCardResponse
+```
+Use the code snippet below to tokenize a card.
+```Swift
+let merchantOrderId = "1234567890" // Unique merchant order ID
+let merchantTransactionId = "1234567890" // Unique merchant transaction ID
+let merchantInvoiceNumber = "1234567890" // Optional
+
+Task {
+    do {
+        let transactionDetailsRequest = Models.TransactionDetailsRequest(
+            merchantTransactionId: merchantTransactionId,
+            merchantOrderId: merchantOrderId,
+            merchantInvoiceNumber: merchantInvoiceNumber
+        )
+
+        let response = try await self.fiservTTPCardReader.tokenizeCard(
+            transactionDetailsRequest: transactionDetailsRequest
+        )
+
+        if response.gatewayResponse?.transactionState == "AUTHORIZED" {
+            // Process the response here...
+        }
+    } catch {
+        // Handle Error
+    }
+}
 ```
 
 **NOTE:** the createToken field in the TransactionDetailsRequest does not need to be explicitly set to true.
@@ -183,7 +252,8 @@ Additional information can be found here:
 [Commerce Hub Tokenization](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/Guides/Payment-Sources/Tokenization/TransAmor.md&branch=main)
 
 **- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -**
-### 😀 Charges API
+
+#### Charges API
 
 **This API supports Authorizations, Payment Tokens, Capture, and Sale**
 
@@ -215,16 +285,145 @@ public func charges(amount: Decimal,
 
 **TransactionDetailsRequest.createToken can be true for any PaymentTransactionType -requires Merchant configuration**
 
+Use the code snippet below to perform an authorization (pre-authorization) transaction. A subsequent capture transaction is required to settle the authorization.
+
+```Swift
+let amount = 12.04
+let createPaymentToken = false
+let merchantOrderId = "1234567890" // Unique merchant order ID
+let merchantTransactionId = "1234567890" // Unique merchant transaction ID
+let merchantInvoiceNumber = "1234567890" // Optional
+let transactionType = PaymentTransactionType.auth
+let paymentTokenSource: Models.PaymentTokenSourceRequest // PaymentToken from the tokenize response
+let transactionDetails = Models.TransactionDetailsRequest(
+    merchantTransactionId: merchantTransactionId,
+    merchantOrderId: merchantOrderId,
+    merchantInvoiceNumber: merchantInvoiceNumber,
+    createToken: createPaymentToken
+)
+
+Task {
+    do {
+        let response = try await self.fiservTTPCardReader.charges(
+            amount: bankersAmount(amount: amount),
+            transactionType: transactionType,
+            transactionDetailsRequest: transactionDetails,
+            paymentTokenSourceRequest: paymentTokenSource
+        )
+
+        // Transaction response
+        if response.gatewayResponse?.transactionState == "AUTHORIZED" {
+            // Process the response here...
+        }
+    } catch {
+        // Handle Error
+    }
+}
+```
+
+Use the code snippet below to perform a cancel (void) transaction using a referenceTransactionId.
+At least one reference transaction identifier must be provided to perform a capture.
+
+```Swift
+let amount = 12.04
+let createPaymentToken = false
+let referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest(referenceTransactionId: "DEF0987654321") // referenceTransactionId from previous Authorization
+let transactionType = PaymentTransactionType.capture
+
+Task {
+    do {
+        let transactionDetails = Models.TransactionDetailsRequest(
+            merchantTransactionId: merchantTransactionId,
+            merchantOrderId: merchantOrderId,
+            merchantInvoiceNumber: merchantInvoiceNumber,
+            createToken: createPaymentToken
+        )
+
+        let response = try await self.fiservTTPCardReader.charges(
+            amount: bankersAmount(amount: amount),
+            transactionType: transactionType,
+            transactionDetailsRequest: transactionDetails,
+            referenceTransactionDetailsRequest: referenceTransactionDetails
+        )
+
+        // Transaction response
+        if response.gatewayResponse?.transactionState == "CAPTURED" {
+            // Process the response here...
+        }
+    } catch {
+        // Handle Error
+    }
+}
+```
+
+Use the code snippet below to perform a sale transaction.
+
+```Swift
+let amount = 12.04
+let createPaymentToken = true
+let merchantOrderId = "1234567890" // Unique merchant order ID
+let merchantTransactionId = "1234567890" // Unique merchant transaction ID
+let merchantInvoiceNumber = "1234567890" // Optional
+let transactionType = PaymentTransactionType.sale
+let transactionDetails = Models.TransactionDetailsRequest(
+    merchantTransactionId: merchantTransactionId,
+    merchantOrderId: merchantOrderId,
+    merchantInvoiceNumber: merchantInvoiceNumber,
+    createToken: createPaymentToken
+)
+
+Task {
+    do {
+        let response = try await self.fiservTTPCardReader.charges(
+            amount: bankersAmount(amount: amount),
+            transactionType: transactionType,
+            transactionDetailsRequest: transactionDetails
+        )
+
+        // Transaction response
+        if response.gatewayResponse?.transactionState == "CAPTURED" {
+            // Process the response here...
+        }
+    } catch {
+        // Handle Error
+    }
+}
+```
+
 Additional Information can be found here:
 [Commerce Hub Charges](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Charges.md&branch=main)
 
 **- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -**
 
-### 😀 Cancels API
+#### Cancels API
 
 ```Swift
 public func cancels(amount: Decimal,
                     referenceTransactionDetailsRequest: Models.ReferenceTransactionDetailsRequest) async throws -> Models.CommerceHubResponse
+```
+
+Use the code snippet below to perform a cancel (void) transaction using a referenceTransactionId.
+At least one reference transaction identifier must be provided to perform a cancel.
+
+```Swift
+let amount = 12.04
+let referenceTransactionId = "1234567890" // referenceTransactionId from previous transaction
+
+Task {
+    do {
+        let voidResponse = try await voidTransaction(
+            amount:amount,
+            referenceTransactionId: = referenceTransactionId
+        )
+
+        // Transaction response
+        if response.gatewayResponse?.transactionState == "CANCELLED" {
+            // Process the response here...
+        }
+    } catch {
+            // Handle Error
+        }
+}
 ```
 
 **NOTE:** At least one of the values for the referenceTransactionDetailsRequest must be provided.
@@ -233,7 +432,7 @@ Additional information can be found here:
 [Commerce Hub Cancel](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Cancel.md&branch=main)
 
 **- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -**
-### 😀 Refunds API
+#### Refunds API
 
 **This API supports Matched, Unmatched, and Open Refunds**
 
@@ -259,6 +458,96 @@ public func refunds(amount: Decimal,
 | TRANSACTION DETAILS          |      N        |      Y        |     Y      |
 | REF TRANS DETAILS            |      Y        |      Y        |     N      |
 
+
+Use the code snippet below to perform a matched (tagged) refund transaction using a referenceTransactionId.
+At least one reference transaction identifier must be provided to perform a tagged refund.
+
+```Swift
+let amount = 12.04
+let refundTransactionType = RefundTransactionType.matched
+let referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest(referenceTransactionId: "DEF0987654321") // referenceTransactionId from previous transaction
+
+Task {
+    do {
+        let response = try await self.fiservTTPCardReader.refunds(
+            amount: bankersAmount(amount: amount),
+            refundTransactionType: refundTransactionType,
+            referenceTransactionDetails: referenceTransactionDetails
+        )
+
+        // Transaction response
+        if response.gatewayResponse?.transactionState == "CAPTURED" {
+            // Process the response here...
+        }
+    } catch {
+        // Handle Error
+    }
+}
+```
+
+Use the code snippet below to perform a unmatched refund transaction using a referenceTransactionId.
+At least one reference transaction identifier must be provided to perform an unmatched tagged refund.
+
+```Swift
+let amount = 12.04
+let refundTransactionType = RefundTransactionType.unmatched
+let referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest(referenceTransactionId: "DEF0987654321") // referenceTransactionId from previous transaction
+let transactionDetails = Models.TransactionDetailsRequest(
+    merchantTransactionId: merchantTransactionId,
+    merchantOrderId: merchantOrderId,
+    merchantInvoiceNumber: merchantInvoiceNumber
+)
+
+Task {
+    do {
+        let response = try await self.fiservTTPCardReader.refunds(
+            amount: bankersAmount(amount: amount),
+            refundTransactionType: refundTransactionType,
+            transactionDetails: transactionDetails,
+            referenceTransactionDetails: referenceTransactionDetails
+        )
+
+        if response.gatewayResponse?.transactionState == "CAPTURED" {
+            // Process the response here...
+        }
+
+    } catch {
+        // Handle Error
+    }
+}
+```
+Use the code snippet below to perform a open refund (credit) transaction.
+
+```Swift
+let amount = 12.04
+let refundTransactionType = RefundTransactionType.open
+let merchantOrderId = "1234567890" // Unique merchant order ID
+let merchantTransactionId = "1234567890" // Unique merchant transaction ID
+let merchantInvoiceNumber = "1234567890" // Optional
+let transactionDetails = Models.TransactionDetailsRequest(
+    merchantTransactionId: merchantTransactionId,
+    merchantOrderId: merchantOrderId,
+    merchantInvoiceNumber: merchantInvoiceNumber
+)
+
+Task {
+    do {
+        let response = try await self.fiservTTPCardReader.refunds(
+            amount: bankersAmount(amount: amount),
+            refundTransactionType: refundTransactionType,
+            transactionDetails: transactionDetails
+        )
+
+        if response.gatewayResponse?.transactionState == "CAPTURED" {
+            // Process the response here...
+        }
+
+    } catch {
+        // Handle Error
+    }
+}
+```
+
 Additional information can be found here:
 [Commerce Hub Matched Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Tagged.md&branch=main)
 
@@ -277,6 +566,24 @@ To retrieve the current state of any previous transaction, an inquiry request ca
 
 ```Swift
 public func transactionInquiry(referenceTransactionDetailsRequest: Models.ReferenceTransactionDetailsRequest) async throws -> [Models.InquireResponse]
+```
+
+Use the code snippet below to perform a transaction inquiry using a referenceTransactionId.
+At least one reference transaction identifier must be provided to perform an inquiry.
+
+```Swift
+let referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest(referenceTransactionId: "DEF0987654321") // referenceTransactionId from previous transaction
+
+Task {
+    do {
+        let response = try await self.fiservTTPCardReader.transactionInquiry(
+            referenceTransactionDetailsRequest: referenceTransactionDetails
+        )
+        // Process the response here...
+    } catch {
+        // Handle Error
+    }
+}
 ```
 
 Additional information can be found here:
