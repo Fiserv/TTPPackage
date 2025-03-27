@@ -277,11 +277,6 @@ Additional Information can be found here:
 
 #### Cancels API
 
-```Swift
-public func cancels(amount: Decimal,
-                    referenceTransactionDetailsRequest: Models.ReferenceTransactionDetailsRequest) async throws -> Models.CommerceHubResponse
-```
-
 Use the code snippet below to perform a cancel (void) transaction using a referenceTransactionId.
 At least one reference transaction identifier must be provided to perform a cancel.
 
@@ -316,21 +311,6 @@ Additional information can be found here:
 #### Refunds API
 
 **This API supports Matched, Unmatched, and Open Refunds**
-
-```Swift
-public enum RefundTransactionType {
-    case matched
-    case unmatched
-    case open
-}
-```
-
-```Swift
-public func refunds(amount: Decimal,
-                    refundTransactionType: RefundTransactionType,
-                    transactionDetails: Models.TransactionDetailsRequest? = nil,
-                    referenceTransactionDetails: Models.ReferenceTransactionDetailsRequest? = nil) async throws -> Models.CommerceHubResponse
-```
 
 | Request Parameters           |    MATCHED    |   UNMATCHED   |    OPEN    |
 |------------------------------|---------------|---------------|------------|
@@ -440,12 +420,8 @@ Additional information can be found here:
 **- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -**
 #### Account Verification
 
-```SWift
-public func accountVerification(transactionDetailsRequest: Models.TransactionDetailsRequest,
-                                paymentTokenSourceRequest: Models.PaymentTokenSourceRequest? = nil,
-                                billingAddressRequest: Models.BillingAddressRequest? = nil) async throws -> Models.AccountVerificationResponse
-```
 Use the code snippet below to perform an account verification.
+
 ```Swift
 let usesAddress = true
 let amount = 12.04
@@ -502,10 +478,8 @@ Additional information can be found here:
 
 #### Tokenization
 
-```Swift
-public func tokenizeCard(transactionDetailsRequest: Models.TransactionDetailsRequest) async throws -> Models.TokenizeCardResponse
-```
 Use the code snippet below to tokenize a card.
+
 ```Swift
 let merchantOrderId = "1234567890" // Unique merchant order ID
 let merchantTransactionId = "1234567890" // Unique merchant transaction ID
@@ -543,10 +517,6 @@ Additional information can be found here:
 To retrieve the current state of any previous transaction, an inquiry request can be submitted against the Commerce Hub transaction identifier or merchant transaction identifier.
 
 **NOTE:** At least one of the values for the referenceTransactionDetailsRequest must be provided.
-
-```Swift
-public func transactionInquiry(referenceTransactionDetailsRequest: Models.ReferenceTransactionDetailsRequest) async throws -> [Models.InquireResponse]
-```
 
 Use the code snippet below to perform a transaction inquiry using a referenceTransactionId.
 At least one reference transaction identifier must be provided to perform an inquiry.
