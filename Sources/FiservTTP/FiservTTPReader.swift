@@ -1,6 +1,6 @@
 //  FiservTTP
 //
-//  Copyright (c) 2022 - 2023 Fiserv, Inc.
+//  Copyright (c) 2022 - 2025 Fiserv, Inc.
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
@@ -180,7 +180,7 @@ internal class FiservTTPReader {
         }
     }
     
-    internal func validateCard(currencyCode: String) async throws -> FiservTTPValidateCardResponse {
+    internal func validateCard(currencyCode: String, reason: PaymentCardVerificationRequest.Reason = .other) async throws -> FiservTTPValidateCardResponse {
         
         guard let session = cardReaderSession else {
          
@@ -190,7 +190,7 @@ internal class FiservTTPReader {
         
         do {
             
-            let request = PaymentCardVerificationRequest(currencyCode: currencyCode, for: .other)
+            let request = PaymentCardVerificationRequest(currencyCode: currencyCode, for: reason)
             
             // This method throws a ReadError if a person dismisses the sheet or the sheet fails to appear.
             let result = try await session.readPaymentCard(request)
