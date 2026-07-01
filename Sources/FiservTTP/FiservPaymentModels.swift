@@ -87,6 +87,15 @@ public struct Models {
             self.captureFlag = captureFlag
             self.createToken = createToken
         }
+        
+        var isValid: Bool {
+            let fields = [merchantTransactionId, merchantOrderId, merchantInvoiceNumber]
+            return fields.contains { field in
+                guard let field = field else { return false }
+                // Check not empty and not just whitespace
+                return !field.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            }
+        }
     }
     
     public struct ReferenceTransactionDetailsRequest: Codable {
@@ -108,6 +117,15 @@ public struct Models {
             self.referenceOrderId = referenceOrderId
             self.referenceMerchantOrderId = referenceMerchantOrderId
             self.referenceClientRequestId = referenceClientRequestId
+        }
+        
+        var isValid: Bool {
+            let fields = [referenceTransactionId, referenceMerchantTransactionId, referenceOrderId, referenceMerchantOrderId]
+            return fields.contains { field in
+                guard let field = field else { return false }
+                // Check not empty and not just whitespace
+                return !field.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            }
         }
     }
     
@@ -441,7 +459,7 @@ public struct Models {
         public let gatewayResponse: GatewayResponse?
         public let source: SourceResponse?
         public let paymentTokens: [PaymentTokenResponse]?
-        public let cardDetails: CardDetailsResponse?
+        public let cardDetails: [CardDetailsResponse]?
         public let processorResponseDetails: ProcessorResponseDetailsResponse?
         public let error: ServerErrorResponse?
     }

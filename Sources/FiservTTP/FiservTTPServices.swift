@@ -74,10 +74,12 @@ internal enum FiservTTPPath {
 struct FiservTTPRequestError: Error {
 
     let errorMessage: String
+    let code: Int
     let failureReason: String?
 
-    init(message: String, failureReason: String? = nil) {
+    init(message: String, code: Int, failureReason: String? = nil) {
         self.errorMessage = message
+        self.code = code
         self.failureReason = failureReason
     }
 }
@@ -154,7 +156,7 @@ internal struct FiservTTPEndpoint {
 
 extension FiservTTPEndpoint {
     
-    internal func httpHeaders(requestBody: String, clientRequestId: Int, timestamp: Int64) -> [String : String] {
+    internal func httpHeaders(requestBody: String, clientRequestId: String, timestamp: Int64) -> [String : String] {
         
         var headers = commonHttpHeaders(clientRequestId: clientRequestId, timestamp: timestamp)
         
@@ -168,7 +170,7 @@ extension FiservTTPEndpoint {
         return headers
     }
     
-    private func commonHttpHeaders(clientRequestId: Int, timestamp: Int64) -> [String : String] {
+    private func commonHttpHeaders(clientRequestId: String, timestamp: Int64) -> [String : String] {
 
         var headers = [String : String]()
         headers["Accept"] = "application/json"
@@ -177,12 +179,12 @@ extension FiservTTPEndpoint {
         headers["Auth-Token-Type"] = "HMAC"
         headers["Timestamp"] = String(timestamp)
         headers["Api-Key"] = self.fsconfig.apiKey
-        headers["Client-Request-Id"] = String(clientRequestId)
+        headers["Client-Request-Id"] = clientRequestId
         
         return headers
     }
     
-    private func authHeaderValue(requestBody:String, clientRequestId:Int, timestamp:Int64) -> String? {
+    private func authHeaderValue(requestBody: String, clientRequestId: String, timestamp: Int64) -> String? {
         
         if let secretData = self.fsconfig.secretKey.data(using: .utf8) {
           
@@ -207,17 +209,16 @@ extension FiservTTPEndpoint {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // SERVICES
 
-internal struct FiservTTPServices {
+internal class FiservTTPServices {
     
-    private let authenticateEndpoint: FiservTTPEndpoint
     private let accountVerificationEndpoint: FiservTTPEndpoint
     private let tokenizeEndpoint: FiservTTPEndpoint
     private let tokenEndpoint: FiservTTPEndpoint
     private var chargeEndpoint: FiservTTPEndpoint
     private var inquiryEndpoint: FiservTTPEndpoint
     private var cancelEndpoint: FiservTTPEndpoint
-    private var voidEndpoint: FiservTTPEndpoint
     private var refundEndpoint: FiservTTPEndpoint
+    
     private let bundleIdentifier = "com.fiserv.FiservTTP"
     internal let app_name = "fiserv_ch_apple_ttp_sdk"
     internal let app_version: String
@@ -227,17 +228,12 @@ internal struct FiservTTPServices {
     
     internal init(config: FiservTTPConfig) {
         
-        self.app_version = "1.0.7"
+        self.app_version = "1.0.8"
         
         self.config = config
         
         self.vendorId = UIDevice.current.identifierForVendor?.uuidString.string ?? ""
         
-        self.authenticateEndpoint = FiservTTPEndpoint(config: config,
-                                                      method: .post,
-                                                      path: .authenticate("/ch/security/v1/ttpcredentials", "Authenticate"))
-                
-                
         self.accountVerificationEndpoint = FiservTTPEndpoint(config: config,
                                                              method: .post,
                                                              path: .accountVerification("/ch/payments-vas/v1/accounts/verification", "Account Verification Request"))
@@ -262,18 +258,15 @@ internal struct FiservTTPServices {
                                                 method: .post,
                                                 path: .charge("/ch/payments/v1/cancels", "Void Request"))
         
-        self.voidEndpoint = FiservTTPEndpoint(config: config,
-                                                method: .post,
-                                                path: .charge("/ch/payments/v1/cancels", "Void Request"))
-        
         self.refundEndpoint = FiservTTPEndpoint(config: config,
                                                 method: .post,
                                                 path: .charge("/ch/payments/v1/refunds", "Refund Request"))
     }
     
-    internal func requestSessionToken() async -> Result<FiservTTPTokenResponse, FiservTTPRequestError> {
+    internal func requestSessionToken(clientRequestId: String) async -> Result<FiservTTPTokenResponse, FiservTTPRequestError> {
         
-        return await sendRequest(endpoint: tokenEndpoint,
+        return await sendRequest(clientRequestId: clientRequestId,
+                                 endpoint: tokenEndpoint,
                                  httpBody: bodyForTokenRequest(),
                                  responseModel: FiservTTPTokenResponse.self)
     }
@@ -287,14 +280,15 @@ internal struct FiservTTPServices {
         return encoded
     }
     
-    // NEW
-    internal func accountVerification(transactionDetails: Models.TransactionDetailsRequest,
+    internal func accountVerification(clientRequestId: String,
+                                      transactionDetails: Models.TransactionDetailsRequest,
                                            billingAddress: Models.BillingAddressRequest? = nil,
                                       paymentCardReaderId: String? = nil,
                                 paymentTokenSourceRequest: Models.PaymentTokenSourceRequest? = nil,
                                  cardVerificationResponse: Models.CardVerificationResponse? = nil) async -> Result <Models.AccountVerificationResponse, FiservTTPRequestError> {
             
-            return await sendRequest(endpoint: accountVerificationEndpoint,
+            return await sendRequest(clientRequestId: clientRequestId,
+                                     endpoint: accountVerificationEndpoint,
                                      httpBody: bodyForAccountVerification(transactionDetails: transactionDetails,
                                                                           billingAddress: billingAddress,
                                                                           cardVerificationResponse: cardVerificationResponse,
@@ -302,11 +296,12 @@ internal struct FiservTTPServices {
                                      responseModel: Models.AccountVerificationResponse.self)
     }
     
-    // NEW
-    internal func tokenize(transationDetails: Models.TransactionDetailsRequest,
+    internal func tokenize(clientRequestId: String,
+                           transationDetails: Models.TransactionDetailsRequest,
                            cardVerificationResponse: Models.CardVerificationResponse) async -> Result<Models.TokenizeCardResponse, FiservTTPRequestError> {
 
-        return await sendRequest(endpoint: tokenizeEndpoint,
+        return await sendRequest(clientRequestId: clientRequestId,
+                                 endpoint: tokenizeEndpoint,
                                  httpBody: bodyForTokenizeRequest(transactionDetails: transationDetails,
                                                                   paymentCardReaderId: cardVerificationResponse.cardReaderId,
                                                                   generalCardData: cardVerificationResponse.generalCardData,
@@ -316,16 +311,17 @@ internal struct FiservTTPServices {
         
     }
     
-    // NEW
-    internal func transactionInquiry(inquireRequest: Models.TransactionInquiryRequest) async -> Result<[Models.InquireResponse], FiservTTPRequestError> {
+    internal func transactionInquiry(clientRequestId: String,
+                                     inquireRequest: Models.TransactionInquiryRequest) async -> Result<[Models.InquireResponse], FiservTTPRequestError> {
         
-        return await sendRequest(endpoint: inquiryEndpoint,
+        return await sendRequest(clientRequestId: clientRequestId,
+                                 endpoint: inquiryEndpoint,
                                  httpBody: bodyFor(inquireRequest),
                                  responseModel: [Models.InquireResponse].self)
     }
     
-    // NEW
-    internal func charges(amountRequest: Models.AmountRequest,
+    internal func charges(clientRequestId: String,
+                          amountRequest: Models.AmountRequest,
                           transactionDetailsRequest: Models.TransactionDetailsRequest,
                           referenceTransactionDetailsRequest: Models.ReferenceTransactionDetailsRequest? = nil,
                           paymentTokenChargeRequest: Models.PaymentTokenChargeRequest? = nil,
@@ -333,36 +329,43 @@ internal struct FiservTTPServices {
         
         if paymentTokenChargeRequest != nil {
             
-            return await sendRequest(endpoint: chargeEndpoint,
+            return await sendRequest(clientRequestId: clientRequestId,
+                                     endpoint: chargeEndpoint,
                                      httpBody: bodyForPaymentTokenRequest(paymentTokenChargeRequest: paymentTokenChargeRequest),
                                      responseModel: Models.CommerceHubResponse.self)
         } else {
             
-                return await sendRequest(endpoint: chargeEndpoint,
-                                         httpBody: bodyForChargesRequest(amountRequest: amountRequest,
-                                                                         transactionDetailsRequest: transactionDetailsRequest,
-                                                                         referenceTransactionDetailsRequest: referenceTransactionDetailsRequest,
-                                                                         cardVerificationResponse: cardVerificationResponse),
-                                         responseModel: Models.CommerceHubResponse.self)
+            return await sendRequest(clientRequestId: clientRequestId,
+                                     endpoint: chargeEndpoint,
+                                     httpBody: bodyForChargesRequest(amountRequest: amountRequest,
+                                                                     transactionDetailsRequest: transactionDetailsRequest,
+                                                                     referenceTransactionDetailsRequest: referenceTransactionDetailsRequest,
+                                                                     cardVerificationResponse: cardVerificationResponse),
+                                     responseModel: Models.CommerceHubResponse.self)
         }
     }
 
-    // NEW
-    internal func cancels(amountRequest: Models.AmountRequest,
+    internal func cancels(timeout: TimeInterval = 30.0,
+                          clientRequestId: String,
+                          amountRequest: Models.AmountRequest,
                           referenceTransactionDetailsRequest: Models.ReferenceTransactionDetailsRequest) async -> Result<Models.CommerceHubResponse, FiservTTPRequestError> {
         
-        return await sendRequest(endpoint: cancelEndpoint,
+        return await sendRequest(timeout: timeout,
+                                 clientRequestId: clientRequestId,
+                                 endpoint: cancelEndpoint,
                                  httpBody: bodyForCancelsRequest(amountRequest: amountRequest,
                                                                  referenceTransactionDetailsRequest: referenceTransactionDetailsRequest),
                                  responseModel: Models.CommerceHubResponse.self)
     }
     
-    internal func refunds(amountRequest: Models.AmountRequest,
+    internal func refunds(clientRequestId: String,
+                          amountRequest: Models.AmountRequest,
                           transactionDetailsRequest: Models.TransactionDetailsRequest? = nil,
                           referenceTransactionDetailsRequest: Models.ReferenceTransactionDetailsRequest? = nil,
                           cardVerificationResponse: Models.CardVerificationResponse? = nil) async -> Result<Models.CommerceHubResponse, FiservTTPRequestError> {
         
-        return await sendRequest(endpoint: refundEndpoint,
+        return await sendRequest(clientRequestId: clientRequestId,
+                                 endpoint: refundEndpoint,
                                  httpBody: bodyForRefundsRequest(amountRequest: amountRequest,
                                                                  transactionDetailsRequest: transactionDetailsRequest,
                                                                  referenceTransactionDetailsRequest: referenceTransactionDetailsRequest,
@@ -371,111 +374,6 @@ internal struct FiservTTPServices {
         
     }
     
-    internal func charge(amount: Decimal,
-                        currencyCode: String,
-                        merchantOrderId: String? = nil,
-                        merchantTransactionId: String? = nil,
-                        merchantInvoiceNumber: String? = nil,
-                        paymentCardReaderId: String,
-                        paymentCardReadResult: PaymentCardReadResult) async -> Result<FiservTTPChargeResponse, FiservTTPRequestError> {
-        
-        guard let generalCardData = paymentCardReadResult.generalCardData,
-              let paymentCardData = paymentCardReadResult.paymentCardData else {
-            
-            return .failure(FiservTTPRequestError(message: "Payment Card data missing or corrupt."))
-        }
-
-        return await sendRequest(endpoint: chargeEndpoint,
-                                 httpBody: bodyForChargeRequest(amount: amount,
-                                                                currencyCode: currencyCode,
-                                                                merchantOrderId: merchantOrderId,
-                                                                merchantTransactionId: merchantTransactionId,
-                                                                merchantInvoiceNumber: merchantInvoiceNumber,
-                                                                paymentCardReaderId: paymentCardReaderId,
-                                                                generalCardData: generalCardData,
-                                                                paymentCardData: paymentCardData,
-                                                                cardReaderTransactionId: paymentCardReadResult.id),
-                                responseModel: FiservTTPChargeResponse.self)
-    }
-
-    internal func inquiry(referenceTransactionId: String? = nil,
-                          referenceMerchantTransactionId: String? = nil,
-                          referenceMerchantOrderId: String? = nil,
-                          referenceOrderId: String? = nil) async -> Result<[FiservTTPChargeResponse], FiservTTPRequestError> {
-        
-        return await sendRequest(endpoint: inquiryEndpoint,
-                                 httpBody: bodyForInquiryRequest(referenceTransactionId: referenceTransactionId,
-                                                                 referenceMerchantTransactionId: referenceMerchantTransactionId,
-                                                                 referenceMerchantOrderId: referenceMerchantOrderId,
-                                                                 referenceOrderId: referenceOrderId),
-                                                                 responseModel: [FiservTTPChargeResponse].self)
-    }
-    
-    internal func void(referenceTransactionId: String? = nil,
-                       referenceMerchantTransactionId: String? = nil,
-                       referenceTransactionType: String,
-                       total: Decimal,
-                       currencyCode: String) async -> Result<FiservTTPChargeResponse, FiservTTPRequestError> {
-        
-        return await sendRequest(endpoint: voidEndpoint,
-                                 httpBody: bodyForVoidRequest(referenceTransactionId: referenceTransactionId,
-                                                              referenceMerchantTransactionId: referenceMerchantTransactionId,
-                                                              referenceTransactionType: referenceTransactionType,
-                                                              total: total,
-                                                              currencyCode: currencyCode),
-                                                              responseModel: FiservTTPChargeResponse.self)
-    }
-    
-    internal func refund(referenceTransactionId: String? = nil,
-                         referenceMerchantTransactionId: String? = nil,
-                         referenceTransactionType: String,
-                         total: Decimal,
-                         currencyCode: String) async -> Result<FiservTTPChargeResponse, FiservTTPRequestError> {
-    
-        
-        return await sendRequest(endpoint: refundEndpoint,
-                                 httpBody: bodyForRefundRequest(referenceTransactionId: referenceTransactionId,
-                                                                referenceMerchantTransactionId: referenceMerchantTransactionId,
-                                                                referenceTransactionType: referenceTransactionType,
-                                                                total: total,
-                                                                currencyCode: currencyCode),
-                                                                responseModel: FiservTTPChargeResponse.self)
-    }
-    
-    internal func refundCard(merchantOrderId: String? = nil,
-                             merchantTransactionId: String? = nil,
-                             merchantInvoiceNumber: String? = nil,
-                             referenceTransactionId: String? = nil,
-                             referenceMerchantTransactionId: String? = nil,
-                             referenceTransactionType: String,
-                             total: Decimal,
-                             currencyCode: String,
-                             paymentCardReaderId: String,
-                             paymentCardReadResult: PaymentCardReadResult) async -> Result<FiservTTPChargeResponse, FiservTTPRequestError> {
-
-        guard let generalCardData = paymentCardReadResult.generalCardData,
-              let paymentCardData = paymentCardReadResult.paymentCardData else {
-        
-            return .failure(FiservTTPRequestError(message: "Payment Card data missing or corrupt."))
-        }
-        
-        return await sendRequest(endpoint: refundEndpoint,
-                                 httpBody: bodyForRefundCardRequest(merchantOrderId: merchantOrderId,
-                                                                    merchantTransactionId: merchantTransactionId,
-                                                                    merchantInvoiceNumber: merchantInvoiceNumber,
-                                                                    referenceTransactionId: referenceTransactionId,
-                                                                    referenceMerchantTransactionId: referenceMerchantTransactionId,
-                                                                    referenceTransactionType: referenceTransactionType,
-                                                                    total: total,
-                                                                    currencyCode: currencyCode,
-                                                                    generalCardData: generalCardData,
-                                                                    paymentCardData: paymentCardData,
-                                                                    cardReaderId: paymentCardReaderId,
-                                                                    cardReaderTransactionId: paymentCardReadResult.id),
-                                                                    responseModel: FiservTTPChargeResponse.self)
-    }
-    
-    // NEW
     internal func bodyForAccountVerification(transactionDetails: Models.TransactionDetailsRequest,
                                                  billingAddress: Models.BillingAddressRequest? = nil,
                                        cardVerificationResponse: Models.CardVerificationResponse? = nil,
@@ -554,7 +452,6 @@ internal struct FiservTTPServices {
         return nil
     }
     
-    // NEW
     internal func bodyForTokenizeRequest(transactionDetails: Models.TransactionDetailsRequest,
                                          paymentCardReaderId: String,
                                          generalCardData: String,
@@ -603,7 +500,6 @@ internal struct FiservTTPServices {
         return encoded
     }
     
-    // NEW
     internal func bodyForPaymentTokenRequest(paymentTokenChargeRequest: Models.PaymentTokenChargeRequest?) -> Data? {
         
         let jsonEncoder = JSONEncoder()
@@ -613,7 +509,6 @@ internal struct FiservTTPServices {
         return encoded
     }
 
-    // NEW
     internal func bodyForChargesRequest(amountRequest: Models.AmountRequest,
                                         transactionDetailsRequest: Models.TransactionDetailsRequest,
                                         referenceTransactionDetailsRequest: Models.ReferenceTransactionDetailsRequest? = nil,
@@ -674,71 +569,6 @@ internal struct FiservTTPServices {
         return encoded
     }
     
-    internal func bodyForChargeRequest(amount: Decimal,
-                                       currencyCode: String,
-                                       merchantOrderId: String? = nil,
-                                       merchantTransactionId: String? = nil,
-                                       merchantInvoiceNumber: String? = nil,
-                                       paymentCardReaderId: String,
-                                       generalCardData: String,
-                                       paymentCardData: String,
-                                       cardReaderTransactionId: String) -> Data? {
-        
-        let amount = FiservTTPChargeRequestAmount(total: amount, currency: currencyCode)
-        
-        let source = FiservTTPChargeRequestSource(sourceType: sourceTypeName,
-                                                  generalCardData: generalCardData,
-                                                  paymentCardData: paymentCardData,
-                                                  cardReaderId: paymentCardReaderId,
-                                                  cardReaderTransactionId: cardReaderTransactionId,
-                                                  appleTtpMerchantId: self.config.appleTtpMerchantId)
-        
-        let transactionDetails = FiservTTPChargeRequestTransactionDetails(captureFlag: true,
-                                                                          merchantOrderId: merchantOrderId,
-                                                                          merchantTransactionId: merchantTransactionId,
-                                                                          merchantInvoiceNumber: merchantInvoiceNumber)
-
-        let posFeatures = FiservTTPChargeRequestPosFeatures(pinAuthenticationCapability: "CAN_ACCEPT_PIN",
-                                                            terminalEntryCapability: "CONTACTLESS")
-        
-        let posHardwareAndSoftware = FiservTTPChargeRequestPosHardwareAndSoftware(softwareApplicationName: self.app_name,
-                                                                                  softwareVersionNumber: self.app_version,
-                                                                                  hardwareVendorIdentifier: self.vendorId)
-        
-        let dataEntrySource = FiservTTPChargeRequestDataEntrySource(dataEntrySource: "MOBILE_TERMINAL",
-                                                                    posFeatures: posFeatures,
-                                                                    posHardwareAndSoftware: posHardwareAndSoftware)
-
-        let transactionInteraction = FiservTTPChargeRequestTransactionInteraction(origin: "POS",
-                                                                                  posEntryMode: "CONTACTLESS",
-                                                                                  posConditionCode: "CARD_PRESENT",
-                                                                                  additionalPosInformation: dataEntrySource)
-        
-        let processor = FiservTTPChargeRequestAdditionalDataCommonProcessor(processorName: "FISERV",
-                                                                            processingPlatform: "NASHVILLE",
-                                                                            settlementPlatform: "NORTH",
-                                                                            priority: "PRIMARY")
-        
-        let processors = FiservTTPChargeRequestAdditionalDataCommonProcessors(processors: processor)
-        
-        let additionalDataCommon = FiservTTPChargeRequestAdditionalDataCommon(origin: processors)
-        
-        let merchantDetails = FiservTTPMerchantDetails(merchantId: self.config.merchantId, terminalId: self.config.terminalId)
-        
-        let chargeRequest = FiservTTPChargeRequest(amount: amount,
-                                                   source: source,
-                                                   transactionDetails: transactionDetails,
-                                                   transactionInteraction: transactionInteraction,
-                                                   merchantDetails: merchantDetails,
-                                                   additionalDataCommon: additionalDataCommon)
-
-        let jsonEncoder = JSONEncoder()
-
-        let encoded = try? jsonEncoder.encode(chargeRequest)
-
-        return encoded
-    }
-    
     internal func bodyForInquiryRequest(referenceTransactionId: String? = nil,
                                         referenceMerchantTransactionId: String? = nil,
                                         referenceMerchantOrderId: String? = nil,
@@ -764,7 +594,6 @@ internal struct FiservTTPServices {
         return encoded
     }
     
-    // NEW
     internal func bodyForCancelsRequest(amountRequest: Models.AmountRequest,
                                         referenceTransactionDetailsRequest: Models.ReferenceTransactionDetailsRequest) -> Data? {
         
@@ -789,7 +618,6 @@ internal struct FiservTTPServices {
     // CAPTURE FLAG                     F           T           T
     // TRANSACTION DETAILS              N           Y           Y
     // REFERENCE TRANSACTION DETAILS    Y           Y           N
-    // NEW
     internal func bodyForRefundsRequest(amountRequest: Models.AmountRequest,
                                         transactionDetailsRequest: Models.TransactionDetailsRequest? = nil,
                                         referenceTransactionDetailsRequest: Models.ReferenceTransactionDetailsRequest? = nil,
@@ -854,148 +682,9 @@ internal struct FiservTTPServices {
         return encoded
     }
     
-    internal func bodyForVoidRequest(referenceTransactionId: String? = nil,
-                                     referenceMerchantTransactionId: String? = nil,
-                                     referenceTransactionType: String,
-                                     total: Decimal,
-                                     currencyCode: String) -> Data? {
-        
-        let voidRequestAmount = FiservTTPVoidRequestAmount(total: total, currency: currencyCode)
-        
-        let voidMerchantDetails = FiservTTPVoidMerchantDetails(terminalId: self.config.terminalId, merchantId: self.config.merchantId)
-        
-        let referenceTransactionDetails = FiservTTPVoidReferenceTransactionDetails(referenceTransactionId: referenceTransactionId,
-                                                                                   referenceMerchantTransactionId: referenceMerchantTransactionId,
-                                                                                   referenceTransactionType: referenceTransactionType)
-        
-        let voidRequest = FiservTTPVoidRequest(referenceTransactionDetails: referenceTransactionDetails,
-                                               amount: voidRequestAmount,
-                                               merchantDetails: voidMerchantDetails)
-        
-        let jsonEncoder = JSONEncoder()
-
-        let encoded = try? jsonEncoder.encode(voidRequest)
-
-        return encoded
-    }
-    
-    internal func bodyForRefundRequest(referenceTransactionId: String? = nil,
-                                       referenceMerchantTransactionId: String? = nil,
-                                       referenceTransactionType: String,
-                                       total: Decimal,
-                                       currencyCode: String) -> Data? {
-        
-        let refundRequestAmount = FiservTTPRefundRequestAmount(total: total, currency: currencyCode)
-        
-        let refundMerchantDetails = FiservTTPRefundMerchantDetails(terminalId: self.config.terminalId, merchantId: self.config.merchantId)
-        
-        let referenceTransactionDetails = FiservTTPRefundReferenceTransactionDetails(referenceTransactionId: referenceTransactionId,
-                                                                                     referenceMerchantTransactionId: referenceMerchantTransactionId,
-                                                                                     referenceTransactionType: referenceTransactionType)
-        
-        let refundRequest = FiservTTPRefundRequest(referenceTransactionDetails: referenceTransactionDetails,
-                                                   amount: refundRequestAmount,
-                                                   merchantDetails: refundMerchantDetails)
-        
-        let jsonEncoder = JSONEncoder()
-
-        let encoded = try? jsonEncoder.encode(refundRequest)
-
-        return encoded
-    }
-
-    internal func bodyForRefundCardRequest(merchantOrderId: String? = nil,
-                                           merchantTransactionId: String? = nil,
-                                           merchantInvoiceNumber: String? = nil,
-                                           referenceTransactionId: String? = nil,
-                                           referenceMerchantTransactionId: String? = nil,
-                                           referenceTransactionType: String,
-                                           total: Decimal,
-                                           currencyCode: String,
-                                           generalCardData: String,
-                                           paymentCardData: String,
-                                           cardReaderId: String,
-                                           cardReaderTransactionId: String) -> Data? {
-        
-        let refundRequestAmount = FiservTTPRefundCardRequestAmount(total: total, currency: currencyCode)
-        
-        let refundMerchantDetails = FiservTTPRefundCardRequestMerchantDetails(merchantId: self.config.merchantId, terminalId: self.config.terminalId)
-        
-        let source = FiservTTPRefundCardRequestSource(sourceType: sourceTypeName,
-                                                      generalCardData: generalCardData,
-                                                      paymentCardData: paymentCardData,
-                                                      cardReaderId: cardReaderId,
-                                                      cardReaderTransactionId: cardReaderTransactionId,
-                                                      appleTtpMerchantId: self.config.appleTtpMerchantId)
-        
-        let posFeatures = FiservTTPRefundCardRequestPosFeatures(pinAuthenticationCapability: "CAN_ACCEPT_PIN",
-                                                                terminalEntryCapability: "CONTACTLESS")
-        
-        let posHardwareAndSoftware = FiservTTPChargeRequestPosHardwareAndSoftware(softwareApplicationName: self.app_name,
-                                                                                  softwareVersionNumber: self.app_version,
-                                                                                  hardwareVendorIdentifier: self.vendorId)
-        
-        let dataEntrySource = FiservTTPRefundCardRequestDataEntrySource(dataEntrySource: "MOBILE_TERMINAL",
-                                                                        posFeatures: posFeatures,
-                                                                        posHardwareAndSoftware: posHardwareAndSoftware)
-        
-        let transactionInteraction = FiservTTPRefundCardRequestTransactionInteraction(origin: "POS",
-                                                                                      posEntryMode: "CONTACTLESS",
-                                                                                      posConditionCode: "CARD_PRESENT",
-                                                                                      additionalPosInformation: dataEntrySource)
-        
-        let processor = FiservTTPRefundCardRequestAdditionalDataCommonProcessor(processorName: "FISERV",
-                                                                                processingPlatform: "NASHVILLE",
-                                                                                settlementPlatform: "NORTH",
-                                                                                priority: "PRIMARY")
-        
-        let processors = FiservTTPRefundCardRequestAdditionalDataCommonProcessors(processors: processor)
-        
-        let additionalDataCommon = FiservTTPRefundCardRequestAdditionalDataCommon(origin: processors)
-        
-        var refundCardRequest: FiservTTPRefundCardRequest
-        
-        let transactionDetails = FiservTTPRefundCardRequestTransactionDetails(captureFlag: true,
-                                                                              merchantOrderId: merchantOrderId,
-                                                                              merchantTransactionId: merchantTransactionId,
-                                                                              merchantInvoiceNumber: merchantInvoiceNumber)
-        
-        if referenceTransactionId == nil && referenceMerchantTransactionId == nil {
-            
-            // Open Refund - No reference values should be provided
-            
-            refundCardRequest = FiservTTPRefundCardRequest(amount: refundRequestAmount,
-                                                           source: source,
-                                                           transactionDetails: transactionDetails,
-                                                           referenceTransactionDetails: nil,
-                                                           transactionInteraction: transactionInteraction,
-                                                           merchantDetails: refundMerchantDetails,
-                                                           additionalDataCommon: additionalDataCommon)
-        } else {
-            
-            // Tagged Refund Unmatched - TransID + Tap + Different Card (than original sale)
-            
-            let referenceTransactionDetails = FiservTTPRefundReferenceTransactionDetails(referenceTransactionId: referenceTransactionId,
-                                                                                         referenceMerchantTransactionId: referenceMerchantTransactionId,
-                                                                                         referenceTransactionType: referenceTransactionType)
-            
-            refundCardRequest = FiservTTPRefundCardRequest(amount: refundRequestAmount,
-                                                           source: source,
-                                                           transactionDetails: transactionDetails,
-                                                           referenceTransactionDetails: referenceTransactionDetails,
-                                                           transactionInteraction: transactionInteraction,
-                                                           merchantDetails: refundMerchantDetails,
-                                                           additionalDataCommon: additionalDataCommon)
-        }
-        
-        let jsonEncoder = JSONEncoder()
-        
-        let encoded = try? jsonEncoder.encode(refundCardRequest)
-        
-        return encoded
-    }
-    
-    internal func sendRequest<T: Decodable>(endpoint: FiservTTPEndpoint,
+    internal func sendRequest<T: Decodable>(timeout: TimeInterval = 30.0,
+                                            clientRequestId: String,
+                                            endpoint: FiservTTPEndpoint,
                                             httpBody: Data?,
                                             responseModel: T.Type) async -> Result<T, FiservTTPRequestError> {
         
@@ -1009,7 +698,7 @@ internal struct FiservTTPServices {
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         // HTTP URL
         guard let url = components.url else {
-            return .failure(FiservTTPRequestError(message: "Invalid URL"))
+            return .failure(FiservTTPRequestError(message: "Invalid URL", code: URLError.badURL.rawValue))
         }
         
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1024,7 +713,7 @@ internal struct FiservTTPServices {
         // HTTP BODY
 
         guard let body = httpBody else {
-            return .failure(FiservTTPRequestError(message: "Missing Body"))
+            return .failure(FiservTTPRequestError(message: "Missing Body", code: URLError.zeroByteResource.rawValue))
         }
         
         request.httpBody = body
@@ -1042,43 +731,58 @@ internal struct FiservTTPServices {
         request.allHTTPHeaderFields = endpoint.httpHeaders(requestBody: bodyString,
                                                            clientRequestId: clientRequestId,
                                                            timestamp: timestamp)
-        
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        // URL SESSION CONFIGURATION
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest  = timeout          // Timeout in seconds to reach server
+        configuration.timeoutIntervalForResource = timeout          // Timeout in seconds to receive a response
+        configuration.waitsForConnectivity       = false            // Waits for connectivity to become available (or fails immediately)
+        let session = URLSession(configuration: configuration)      // Set values
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         
         do {
             
-            let (data, response) = try await URLSession.shared.data(for: request)
-            
+            let (data, response) = try await session.data(for: request)
             guard let response = response as? HTTPURLResponse else {
-                return .failure(FiservTTPRequestError(message: "No Response"))
+                return .failure(FiservTTPRequestError(message: "No Response", code: URLError.cannotParseResponse.rawValue))
             }
             
             switch response.statusCode {
-                case 200...299:
+            case 200...299:
                 do {
                     let decoded = try JSONDecoder().decode(responseModel, from: data)
                     
                     return .success(decoded)
                     
                 } catch let DecodingError.dataCorrupted(context) {
-                    return .failure(FiservTTPRequestError(message: "Decode Response", failureReason: "dataCorrupted"))
+                    return .failure(FiservTTPRequestError(message: "Decode Response", code: URLError.cannotDecodeRawData.rawValue, failureReason: "dataCorrupted"))
                 } catch let DecodingError.keyNotFound(key, context) {
-                    return .failure(FiservTTPRequestError(message: "Decode Response", failureReason: "keyNotFound"))
+                    return .failure(FiservTTPRequestError(message: "Decode Response", code: URLError.cannotDecodeRawData.rawValue, failureReason: "keyNotFound"))
                 } catch let DecodingError.valueNotFound(value, context) {
-                    return .failure(FiservTTPRequestError(message: "Decode Response", failureReason: "valueNotFound"))
+                    return .failure(FiservTTPRequestError(message: "Decode Response", code: URLError.cannotDecodeRawData.rawValue, failureReason: "valueNotFound"))
                 } catch let DecodingError.typeMismatch(type, context)  {
-                    return .failure(FiservTTPRequestError(message: "Decode Response", failureReason: "typeMismatch"))
+                    return .failure(FiservTTPRequestError(message: "Decode Response", code: URLError.cannotDecodeRawData.rawValue, failureReason: "typeMismatch"))
                 } catch {
-                    return .failure(FiservTTPRequestError(message: "Decode Response", failureReason: error.localizedDescription))
+                    return .failure(FiservTTPRequestError(message: "Decode Response", code: URLError.cannotDecodeRawData.rawValue, failureReason: error.localizedDescription))
                 }
                 
-                default:
+            default:
                 
                 return .failure(evaluateHttpStatusCode(statusCode: response.statusCode, data: data))
             }
+        } catch let error as URLError {
+            switch error.code {
+            case .timedOut:
+                return .failure(FiservTTPRequestError(message: "Request timed out", code: error.code.rawValue, failureReason: error.localizedDescription))
+            case .networkConnectionLost:
+                return .failure(FiservTTPRequestError(message: "Network Connection Lost", code: error.code.rawValue, failureReason: error.localizedDescription))
+            case .notConnectedToInternet:
+                return .failure(FiservTTPRequestError(message: "Not Connected To Internet", code: error.code.rawValue, failureReason: error.localizedDescription))
+            default:
+                return .failure(FiservTTPRequestError(message: "Network error", code: error.code.rawValue, failureReason: error.localizedDescription))
+            }
         } catch {
-            
-            return .failure(FiservTTPRequestError(message: "Unknown Error", failureReason: error.localizedDescription))
+            return .failure(FiservTTPRequestError(message: "Unknown Error", code: -1, failureReason: error.localizedDescription))
         }
     }
 }
@@ -1105,14 +809,17 @@ extension FiservTTPServices {
         
         return Int64((Date().timeIntervalSince1970 * 1000.0).rounded())
     }
-    
-    var clientRequestId: Int {
-        
-        return Int.random(in: 10000000..<100000000)
-    }
 }
 
 extension FiservTTPServices {
+    
+    internal var NSURLConnectionFailureCodes: [Int] {
+        [
+            NSURLErrorTimedOut,
+            NSURLErrorNetworkConnectionLost,
+            NSURLErrorNotConnectedToInternet
+        ]
+    }
     
     func evaluateHttpStatusCode(statusCode: Int, data: Data) -> FiservTTPRequestError {
         
@@ -1120,23 +827,23 @@ extension FiservTTPServices {
         
         switch statusCode {
         case 400:
-            return FiservTTPRequestError(message: "Bad Request.", failureReason: serverMessage)
+            return FiservTTPRequestError(message: "Bad Request.", code: statusCode, failureReason: serverMessage)
         case 401:
-            return FiservTTPRequestError(message: "Unauthorized", failureReason: serverMessage)
+            return FiservTTPRequestError(message: "Unauthorized", code: statusCode, failureReason: serverMessage)
         case 404:
-            return FiservTTPRequestError(message: "Not Found", failureReason: serverMessage)
+            return FiservTTPRequestError(message: "Not Found", code: statusCode, failureReason: serverMessage)
         case 500:
-            return FiservTTPRequestError(message: "Internal Error", failureReason: serverMessage)
+            return FiservTTPRequestError(message: "Internal Error", code: statusCode, failureReason: serverMessage)
         case 501:
-            return FiservTTPRequestError(message: "Not Implemented", failureReason: serverMessage)
+            return FiservTTPRequestError(message: "Not Implemented", code: statusCode, failureReason: serverMessage)
         case 502:
-            return FiservTTPRequestError(message: "Bad Gateway", failureReason: serverMessage)
+            return FiservTTPRequestError(message: "Bad Gateway", code: statusCode, failureReason: serverMessage)
         case 503:
-            return FiservTTPRequestError(message: "Service Unavailable", failureReason: serverMessage)
+            return FiservTTPRequestError(message: "Service Unavailable", code: statusCode, failureReason: serverMessage)
         case 504:
-            return FiservTTPRequestError(message: "Gateway Timeout", failureReason: serverMessage)
+            return FiservTTPRequestError(message: "Gateway Timeout", code: statusCode, failureReason: serverMessage)
         default:
-            return FiservTTPRequestError(message: "Unexpected Error", failureReason: serverMessage)
+            return FiservTTPRequestError(message: "Unexpected Error", code: statusCode, failureReason: serverMessage)
         }
     }
 }
