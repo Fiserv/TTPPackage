@@ -65,7 +65,6 @@ internal class FiservTTPReader {
         return PaymentCardReader.isSupported
     }
     
-    @available(iOS 16.4, *)
     internal func isAccountLinked(token: String) async throws -> Bool {
         
         let title = "Is Account Linked"

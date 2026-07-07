@@ -16,8 +16,8 @@ Apple Tap to Pay on iPhone requires iPhone XS or later.
 
 | Transaction Type             | Minimum iOS Version                                                                |   
 |------------------------------|------------------------------------------------------------------------------------|
-| Credit                       | iOS 16.7                                                                           |
-| Debit                        | iOS 16.7                                                                           |
+| Credit                       | iOS 18.x (absolute minimum version as of September 2025)                           |
+| Debit                        | iOS 18.x (absolute minimum version as of September 2025)                           |
 
 
 ### Tap to Pay Entitlement
@@ -100,7 +100,8 @@ You must obtain a session token in order to utilize the SDK.  Acquire the token 
 
 ```Swift
 do {
-    try await fiservTTPCardReader.requestSessionToken()
+    let clientRequestId = UUID().uuidString
+    try await fiservTTPCardReader.requestSessionToken(clientRequestId: clientRequestId)
 } catch let error as FiservTTPCardReaderError {
     // TODO handle exception
 }
@@ -109,7 +110,7 @@ do {
 Note that the session token has a time to live of 48 hours. However, we have included an **auto-refresh feature** that will request a new token for you when the TTL value is 30 minutes or less. Moving the app from the background to the foreground, as well as unlocking (a locked iPhone) will trigger this check and the refresh will occur based on the time remaining of the token. 
 
 Additional information can be found here:
-[Commerce Hub Security](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Security/Credentials.md&branch=main#endpoint)
+[Commerce Hub Security](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Security/Credentials.md&branch=main)
 
 ### Link Account
 Next you must link the device running the app to an Apple ID. This needs to happen **just once**.  You are responsible for tracking whether the linking process has occurred already or not.  If not, then perform linking by making this call:
@@ -150,6 +151,77 @@ do {
 **NOTE:** that you must re-initialize the reader session each time the app starts.
 
 **- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -**
+## Idempotency in API requests
+
+Commerce Hub supports an idempotency operation that allows the same API call to be submitted 
+repeatedly while producing the same result. For example, in the case of a timeout error, a 
+merchant can retry the same API call multiple times; this guarantees that the transaction processes once.
+Our APIs use the Client-Request-Id element to ensure idempotency on transaction requests.
+
+The Client-Request-Id is a client-generated number that is unique for each request. It is used as 
+a nonce and validated against all Client-Request-Ids received by Commerce Hub within a predetermined 
+time frame (24 hours is the default) to prevent replay attacks. Commerce Hub uses the timestamp of the 
+request to validate against stale requests. Any request older than the specified duration is rejected.
+
+The following transaction types support and require a unique identifier. The recommended value is a 128-bit UUID.
+
+##### Session Token, Account Verification, Tokenization, Charges, Refunds, Cancels, and Transaction Inquiry
+
+Additional Information can be found here:
+[Idempotency in API requests](https://developer.fiserv.com/product/CommerceHub/docs/Developer-Resources/API-Reference/Idempotency.mdx)
+
+**- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -**
+
+## Transaction Serialization
+
+A new transaction may only begin once the previous transaction has returned a success or failure response, or thrown an error. A concurrent attempt throws a `FiservTTPCardReaderError`.
+
+```Swift
+    // MARK: - Transaction Serialization
+    //
+    // Only one transaction may be in flight at a time. A new transaction can begin
+    // only after the previous one has thrown an error, or returned a success or
+    // failure response. This prevents a second transaction from starting while an
+    // earlier one is still waiting on an http response due to network latency.
+    //
+    // Because `acquire()` and `release()` contain no suspension points (no `await`),
+    // the actor guarantees the check-and-set executes atomically. This avoids the
+    // reentrancy hazard that a plain actor method spanning an `await` would have,
+    // where another task could interleave while the first is suspended.
+    
+    private actor TransactionSerializer {
+        
+        private var transactionInProgress = false
+        
+        func acquire() throws {
+            guard !transactionInProgress else {
+                throw FiservTTPCardReaderError(title: "Transaction In Progress",
+                                               localizedDescription: NSLocalizedString("A transaction is already in progress. Only one transaction may be processed at a time.", comment: ""))
+            }
+            transactionInProgress = true
+        }
+        
+        func release() {
+            transactionInProgress = false
+        }
+    }    
+```
+
+The following transactions support Transaction Serialization:
+
+##### Validate Card, Account Verification, Tokenize Card, Transaction Inquiry, Charges, Refunds, Cancels
+
+**- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -**
+
+## Timeout Reversals
+
+In the rare but possible event that a response from the server is not received, there is a new facility to attempt to reverse (cancel) a primary transaction. If the expected response is not received within 30 seconds, the Apple Tap To Pay package will attempt a cancel. This will continue for a maximum of 3 times after the initial timeout, with the first wait period of 30 seconds and then 3 10 seconds wait periods. After each wait period, a cancel will be attempted. In the event a response is received at anytime during a wait cycle, the response will be returned as expected. If all of the attempts do not return a response, an error will be thrown and no further cancel attempts will be made.
+
+Timeout Reversals are implemented for:
+
+##### Charges and Refunds
+
+**- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -**
 
 #### Charges API
 
@@ -168,9 +240,10 @@ do {
 Use the code snippet below to perform a sale transaction.
 
 ```Swift
+let clientRequestId = UUID().uuidString  // 128 bit uinque Identifier
 let amount = 12.04
 let createPaymentToken = true
-let merchantOrderId = "1234567890" // Unique merchant order ID
+let merchantOrderId = "1234567890"       // Unique merchant order ID
 let merchantTransactionId = "1234567890" // Unique merchant transaction ID
 let merchantInvoiceNumber = "1234567890" // Optional
 let transactionType = PaymentTransactionType.sale
@@ -184,6 +257,7 @@ let transactionDetails = Models.TransactionDetailsRequest(
 Task {
     do {
         let response = try await self.fiservTTPCardReader.charges(
+            clientRequestId: clientRequestId,
             amount: bankersAmount(amount: amount),
             transactionType: transactionType,
             transactionDetailsRequest: transactionDetails
@@ -202,9 +276,10 @@ Task {
 Use the code snippet below to perform an authorization (pre-authorization) transaction. A subsequent capture transaction is required to settle the authorization.
 
 ```Swift
+let clientRequestId = UUID().uuidString  // 128 bit uinque Identifier
 let amount = 12.04
 let createPaymentToken = false
-let merchantOrderId = "1234567890" // Unique merchant order ID
+let merchantOrderId = "1234567890"       // Unique merchant order ID
 let merchantTransactionId = "1234567890" // Unique merchant transaction ID
 let merchantInvoiceNumber = "1234567890" // Optional
 let transactionType = PaymentTransactionType.auth
@@ -219,6 +294,7 @@ let transactionDetails = Models.TransactionDetailsRequest(
 Task {
     do {
         let response = try await self.fiservTTPCardReader.charges(
+            clientRequestId: clientRequestId,
             amount: bankersAmount(amount: amount),
             transactionType: transactionType,
             transactionDetailsRequest: transactionDetails,
@@ -239,6 +315,7 @@ Use the code snippet below to perform a capture transaction using a referenceTra
 At least one reference transaction identifier must be provided to perform a capture.
 
 ```Swift
+let clientRequestId = UUID().uuidString  // 128 bit uinque Identifier
 let amount = 12.04
 let createPaymentToken = false
 let referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest(referenceTransactionId: "DEF0987654321") // referenceTransactionId from previous Authorization
@@ -254,6 +331,7 @@ Task {
         )
 
         let response = try await self.fiservTTPCardReader.charges(
+            clientRequestId: clientRequest,
             amount: bankersAmount(amount: amount),
             transactionType: transactionType,
             transactionDetailsRequest: transactionDetails,
@@ -281,14 +359,16 @@ Use the code snippet below to perform a cancel (void) transaction using a refere
 At least one reference transaction identifier must be provided to perform a cancel.
 
 ```Swift
+let clientRequestId = UUID().uuidString  // 128 bit uinque Identifier
 let amount = 12.04
-let referenceTransactionId = "1234567890" // referenceTransactionId from previous transaction
+let referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest(referenceTransactionId: "DEF0987654321") // referenceTransactionId from previous transaction 
 
 Task {
     do {
-        let voidResponse = try await voidTransaction(
+        let voidResponse = try await cancels(
+            clientRequestId: clientRequestId,
             amount:amount,
-            referenceTransactionId: = referenceTransactionId
+            referenceTransactionDetails: referenceTransactionDetails
         )
 
         // Transaction response
@@ -323,6 +403,7 @@ Use the code snippet below to perform a matched (tagged) refund transaction usin
 At least one reference transaction identifier must be provided to perform a tagged refund.
 
 ```Swift
+let clientRequestId = UUID().uuidString  // 128 bit uinque Identifier
 let amount = 12.04
 let refundTransactionType = RefundTransactionType.matched
 let referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest(referenceTransactionId: "DEF0987654321") // referenceTransactionId from previous transaction
@@ -330,6 +411,7 @@ let referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest(refe
 Task {
     do {
         let response = try await self.fiservTTPCardReader.refunds(
+            clientRequestId: clientRequestId,
             amount: bankersAmount(amount: amount),
             refundTransactionType: refundTransactionType,
             referenceTransactionDetails: referenceTransactionDetails
@@ -349,6 +431,7 @@ Use the code snippet below to perform a unmatched refund transaction using a ref
 At least one reference transaction identifier must be provided to perform an unmatched tagged refund.
 
 ```Swift
+let clientRequestId = UUID().uuidString  // 128 bit uinque Identifier
 let amount = 12.04
 let refundTransactionType = RefundTransactionType.unmatched
 let referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest(referenceTransactionId: "DEF0987654321") // referenceTransactionId from previous transaction
@@ -361,6 +444,7 @@ let transactionDetails = Models.TransactionDetailsRequest(
 Task {
     do {
         let response = try await self.fiservTTPCardReader.refunds(
+            clientRequestId: clientRequestId,
             amount: bankersAmount(amount: amount),
             refundTransactionType: refundTransactionType,
             transactionDetails: transactionDetails,
@@ -379,6 +463,7 @@ Task {
 Use the code snippet below to perform a open refund (credit) transaction.
 
 ```Swift
+let clientRequestId = UUID().uuidString  // 128 bit uinque Identifier
 let amount = 12.04
 let refundTransactionType = RefundTransactionType.open
 let merchantOrderId = "1234567890" // Unique merchant order ID
@@ -393,6 +478,7 @@ let transactionDetails = Models.TransactionDetailsRequest(
 Task {
     do {
         let response = try await self.fiservTTPCardReader.refunds(
+            clientRequestId: clientRequestId,
             amount: bankersAmount(amount: amount),
             refundTransactionType: refundTransactionType,
             transactionDetails: transactionDetails
@@ -423,10 +509,11 @@ Additional information can be found here:
 Use the code snippet below to perform an account verification.
 
 ```Swift
+let clientRequestId = UUID().uuidString  // 128 bit uinque Identifier
 let usesAddress = true
 let amount = 12.04
 let createPaymentToken = true
-let merchantOrderId = "1234567890" // Unique merchant order ID
+let merchantOrderId = "1234567890"       // Unique merchant order ID
 let merchantTransactionId = "1234567890" // Unique merchant transaction ID
 let merchantInvoiceNumber = "1234567890" // Optional
 let transactionDetails = Models.TransactionDetailsRequest(
@@ -458,6 +545,7 @@ if usesAddress {
 Task {
     do {
         let response = try await self.fiservTTPCardReader.accountVerification(
+            clientRequestId: clientRequestId,
             transactionDetailsRequest: transactionDetails,
             billingAddressRequest: billingAddressRequest
         )
@@ -481,7 +569,8 @@ Additional information can be found here:
 Use the code snippet below to tokenize a card.
 
 ```Swift
-let merchantOrderId = "1234567890" // Unique merchant order ID
+let clientRequestId = UUID().uuidString  // 128 bit uinque Identifier
+let merchantOrderId = "1234567890"       // Unique merchant order ID
 let merchantTransactionId = "1234567890" // Unique merchant transaction ID
 let merchantInvoiceNumber = "1234567890" // Optional
 
@@ -494,6 +583,7 @@ Task {
         )
 
         let response = try await self.fiservTTPCardReader.tokenizeCard(
+            clientRequestId: clientRequestId,
             transactionDetailsRequest: transactionDetailsRequest
         )
 
@@ -522,11 +612,13 @@ Use the code snippet below to perform a transaction inquiry using a referenceTra
 At least one reference transaction identifier must be provided to perform an inquiry.
 
 ```Swift
+let clientRequestId = UUID().uuidString  // 128 bit uinque Identifier
 let referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest(referenceTransactionId: "DEF0987654321") // referenceTransactionId from previous transaction
 
 Task {
     do {
         let response = try await self.fiservTTPCardReader.transactionInquiry(
+            clientRequestId: clientRequestId,
             referenceTransactionDetailsRequest: referenceTransactionDetails
         )
         // Process the response here...
@@ -553,137 +645,3 @@ We've prepared an end-to-end sample app to get you up and running fast. [Get the
 [Tap to Pay on iPhone Security from Apple](https://support.apple.com/guide/security/tap-to-pay-on-iphone-sec72cb155f4/web)
 
 **- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -**
-
-### ⛔️ DEPRECATED - Take a Payment (Charges)
-Congrats on getting this far!  Now you are ready to process your first payment.  Simply make this call and the SDK takes care of the rest for you:
-
-```Swift
-let amount = 10.99  // amount to charge
-let merchantOrderId = "your order ID, for tracking purposes"
-let merchantTransactionId = "your transaction ID, for tracking purposes"
-
-do {
-    let chargeResponse = try await fiservTTPCardReader.readCard(amount: amount, 
-                                                                merchantOrderId: merchantOrderId, 
-                                                                merchantTransactionId: merchantTransactionId)
-    // TODO inspect the chargeResponse to see the authorization result
-} catch let error as FiservTTPCardReaderError {
-    // TODO handle exception
-}
-```
-
-**NOTE:** If the card used for the charges endpoint is PIN DEBIT, the user will see a pin entry screen after tapping the card.
-
-Additional information can be found here:
-[Commerce Hub Charges](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Charges.md&branch=main)
-
-### ⛔️ DEPRECATED - Inquiry
-
-To retrieve the current state of any previous transaction, an inquiry request can be submitted against the Commerce Hub transaction identifier or merchant transaction identifier.
-
-**NOTE:** At least one of the arguments must be provided.
-
-```Swift
-do {
-    let inquireResponse = try await fiservTTPCardReader.inquiryTransaction(referenceTransactionId: referenceTransactionId,
-                                                                           referenceMerchantTransactionId: referenceMerchantTransactionId,
-                                                                           referenceMerchantOrderId: referenceMerchantOrderId,
-                                                                           referenceOrderId: referenceOrderId)
-    // TODO inspect the Inquire Response to see the result
-} catch let error as FiservTTPCardReaderError {
-    // TODO handle exception
-}
-```
-Additional information can be found here:
-[Commerce Hub Inquiry](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Inquiry.md&branch=main)
-
-### ⛔️ DEPRECATED - Refund Payment without Tap
-
-At least one reference transaction identifier must be provided to perform a Tagged Refund.
-
-```Swift
-let amount = 10.99 // amount to void
-let referenceTransactionId = "this value was returned in the charge response"
-do {
-  let refundResponse = try await fiservTTPCardReader.refundTransaction(amount: amount,
-                                                                       referenceTransactionId = referenceTransactionId)
-    // TODO inspect the refundResponse to see the result   
-} catch let error as FiservTTPCardReaderError {
-    // TODO handle exception
-}
-```
-
-**NOTE:** If using PIN DEBIT, refer to the Unmatched-Tagged Refund below.
-
-Additional information can be found here:
-[Commerce Hub Matched Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Tagged.md&branch=main)
-
-### ⛔️ DEPRECATED - Refund Payment with Tap (Unmatched Tagged Refund and Open Refund)
-
-**NOTE:** The fiservTTPCardReader.refundCard API supports both 'Unmatched Tagged Refunds' and 'Open Refunds'.
-
-**Open Refund**
-
-An open refund (credit) is a refund to a card without a reference to the prior transaction.
-
-To perform an Open Refund, do not provide any reference transaction identifiers, but your merchantOrderId or merchantTransactionId can be passed as an argument.
-
-
-```Swift
-let amount = 10.99 // amount to void
-let referenceTransactionId = "this value was returned in the charge response"
-do {
-    let refundResponse = try await fiservTTPCardReader.refundCard(amount: amount),
-                                                                  merchantTransactionId: transactionId)
-    // TODO inspect the refundResponse to see the result
-} catch let error as FiservTTPCardReaderError {
-    // TODO handle exception
-}                                                                 
-```
-
-Additional information can be found here:
-[Commerce Hub Open Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Open.md&branch=main)
-
-**Unmatched Tagged Refund**
-
-To perform an Unmatched Tagged Refund, the referenceTransactionId or the referenceMerchantTrancation must be provided. It is also acceptable to provide all values as well.
-
-An unmatched tagged refund allows a merchant to issue a refund to a payment source other than the one used in the original transaction. The refund is associated with the original charge request by using the Commerce Hub transaction identifier or merchant transaction identifier. This allows the merchant to maintain the linking of the transaction information in Commerce Hub when issuing a refund or store credit.
-
-**Unmatched Tagged Refund example:**
-```Swift
-let amount = 10.99 // amount to void
-let referenceTransactionId = "this value was returned in the charge response"
-do {
-    let refundResponse = try await fiservTTPCardReader.refundCard(amount: amount),
-                                                                  referenceTransactionId: referenceTransactionId,
-                                                                  referenceMerchantTransactionId: referenceMerchantTransactionId)
-    // TODO inspect the refundResponse to see the result
-} catch let error as FiservTTPCardReaderError {
-    // TODO handle exception
-}                                                                 
-```
-**NOTE:** If the card used for the refund card endpoint is PIN DEBIT, the user will see a pin entry screen after tapping the card.
-
-Additional information can be found here:
-[Commerce Hub Unmatched Refund](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Refund-Unmatched.md&branch=main)
-
-**- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -**
-
-### ⛔️ DEPRECATED - Cancel a Payment
-
-```Swift
-let amount = 10.99 // amount to void
-let referenceTransactionId = "this value was returned in the charge response"
-do {
-  let voidResponse = try await fiservTTPCardReader.voidTransaction(amount: amount,
-                                                                   referenceTransactionId = referenceTransactionId)
-    // TODO inspect the voidResponse to see the result
-} catch let error as FiservTTPCardReaderError {
-    // TODO handle exception
-}
-```
-Additional information can be found here:
-[Commerce Hub Cancel](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/API-Documents/Payments/Cancel.md&branch=main)
-
-
