@@ -847,6 +847,7 @@ public class FiservTTPCardReader {
             if err.code == URLError.timedOut.rawValue {
                 
                 let result = try await timeoutReversal(clientRequestId: UUID().uuidString,
+                                                       originalClientRequestId: clientRequestId,
                                                        transactionType: transactionType,
                                                        refundTransactionType: .none,
                                                        amount: amount,
@@ -1057,6 +1058,7 @@ public class FiservTTPCardReader {
             if err.code == URLError.timedOut.rawValue {
                 
                 let result = try await timeoutReversal(clientRequestId: UUID().uuidString,
+                                                       originalClientRequestId: clientRequestId,
                                                        transactionType: .none,
                                                        refundTransactionType: refundTransactionType,
                                                        amount: amount,
@@ -1073,6 +1075,7 @@ public class FiservTTPCardReader {
     }
     
     internal func timeoutReversal(clientRequestId: String,
+                                  originalClientRequestId: String,
                                   transactionType: PaymentTransactionType,
                                   refundTransactionType: RefundTransactionType,
                                   amount: Decimal,
@@ -1110,13 +1113,36 @@ public class FiservTTPCardReader {
                 }
                 
                 // REFUNDS
+                //
+                // A refund's referenceTransactionDetails identify the ORIGINAL CHARGE, so they must not be used
+                // to reverse the refund. Locate the refund by the Client-Request-Id it was sent with, then
+                // cancel the refund itself by its transaction id.
                 if transactionType == .none {
-                    
-                    referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest.init(
-                        referenceTransactionId: referenceTransactionDetailsRequest?.referenceTransactionId,
-                        referenceMerchantTransactionId: referenceTransactionDetailsRequest?.referenceMerchantTransactionId,
-                        referenceOrderId: referenceTransactionDetailsRequest?.referenceOrderId,
-                        referenceMerchantOrderId: referenceTransactionDetailsRequest?.referenceMerchantOrderId)
+
+                    let lookup = await refundLookup(originalClientRequestId: originalClientRequestId)
+
+                    switch lookup {
+                    case .success(.captured(let refundTransactionId)):
+                        referenceTransactionDetails = Models.ReferenceTransactionDetailsRequest.init(
+                            referenceTransactionId: refundTransactionId)
+
+                    case .success(.notApproved):
+                        throw FiservTTPCardReaderError(title: title,
+                                                       localizedDescription: NSLocalizedString("The refund request timed out and the refund was not approved.", comment: ""))
+
+                    case .success(.notFound):
+                        throw FiservTTPCardReaderError(title: title,
+                                                       localizedDescription: NSLocalizedString("The refund request timed out and the refund was not processed.", comment: ""))
+
+                    case .failure(let err):
+                        // Only Timeout Error will keep us in the attempt loop
+                        if err.code == URLError.timedOut.rawValue {
+                            continue
+                        }
+                        throw FiservTTPCardReaderError(title: title,
+                                                       localizedDescription: err.localizedDescription,
+                                                       failureReason: err.failureReason)
+                    }
                 }
                 
                 let cancelResponse = await services.cancels(timeout: 10.0,
@@ -1173,6 +1199,39 @@ public class FiservTTPCardReader {
         throw FiservTTPCardReaderError(title: title, localizedDescription: NSLocalizedString("Maximum number of reversal attempts reached.", comment: ""))
     }
     
+    private enum RefundLookupResult {
+        case captured(transactionId: String)
+        case notApproved
+        case notFound
+    }
+
+    /// Finds the refund that was sent with `originalClientRequestId` using a transaction inquiry.
+    private func refundLookup(originalClientRequestId: String) async -> Result<RefundLookupResult, FiservTTPRequestError> {
+
+        let merchantDetails = Models.MerchantDetailsRequest(merchantId: self.configuration.merchantId,
+                                                            terminalId: self.configuration.terminalId)
+
+        let inquireRequest = Models.TransactionInquiryRequest(referenceTransactionDetails: Models.ReferenceTransactionDetailsRequest(referenceClientRequestId: originalClientRequestId),
+                                                              merchantDetails: merchantDetails)
+
+        let inquireResult = await services.transactionInquiry(clientRequestId: UUID().uuidString,
+                                                              inquireRequest: inquireRequest)
+
+        return inquireResult.map { responses in
+
+            guard let refund = responses.first(where: { $0.gatewayResponse?.transactionType == "REFUND" }) else {
+                return .notFound
+            }
+
+            guard refund.gatewayResponse?.transactionState == "CAPTURED",
+                  let transactionId = refund.gatewayResponse?.transactionProcessingDetails?.transactionId else {
+                return .notApproved
+            }
+
+            return .captured(transactionId: transactionId)
+        }
+    }
+
     private func appendGeneralCardDataToSourceResponse(generalCardData: String?, response: Models.SourceResponse?) -> Models.SourceResponse {
         
         let sourceResponse = Models.SourceResponse(sourceType: response?.sourceType,
