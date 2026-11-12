@@ -633,6 +633,27 @@ Additional information can be found here:
 
 **- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -**
 
+## Logging Requests
+
+To log the Commerce Hub API traffic (for example to investigate failed or timed-out transactions), set a `FiservTTPRequestObserver` on the card reader. It is told about every request just before it is sent, and once more when it completes, whatever the outcome. The reader holds the observer weakly, and callbacks arrive on the thread the request was sent from.
+
+**NOTE:** Requests include the `Api-Key` and `Authorization` headers. Redact them before persisting your logs.
+
+```Swift
+final class RequestLogger: FiservTTPRequestObserver {
+    func fiservTTP(didComplete request: URLRequest, response: URLResponse?, data: Data?, error: Error?) {
+        let status = (response as? HTTPURLResponse)?.statusCode
+        let body = data.map { String(decoding: $0, as: UTF8.self) } ?? ""
+        print("\(request.url?.path ?? "") status: \(String(describing: status)) error: \(String(describing: error)) \(body)")
+    }
+}
+
+let requestLogger = RequestLogger()  // keep a strong reference
+fiservTTPCardReader.requestObserver = requestLogger
+```
+
+**- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -**
+
 ## Download the sample app
 We've prepared an end-to-end sample app to get you up and running fast. [Get the Sample App here](https://github.com/Fiserv/TTPSampleApp)
 
