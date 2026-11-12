@@ -80,6 +80,8 @@ let myConfig = FiservTTPConfig(
     terminalProfileId: "3c00e000-a00e-2043-6d63-936859000002") /// Unique identifier for the terminal profile used to configure the kernels of the card reader and manage payment terminal behavior
 ```
 
+`FiservTTPConfig` also accepts an optional `requestTimeout` (in seconds, default 30) as its last parameter. It sets how long each request to Commerce Hub waits for a response, and therefore when a [Timeout Reversal](#timeout-reversals) is started.
+
 Now create an instance of `FiservTTPCardReader`, which is the main class that your app will interact with.  Typically you would put this in a view model.
 
 ```Swift
@@ -215,7 +217,7 @@ The following transactions support Transaction Serialization:
 
 ## Timeout Reversals
 
-In the rare but possible event that a response from the server is not received, there is a new facility to attempt to reverse (cancel) a primary transaction. If the expected response is not received within 30 seconds, the Apple Tap To Pay package will attempt a cancel. This will continue for a maximum of 3 times after the initial timeout, with the first wait period of 30 seconds and then 3 10 seconds wait periods. After each wait period, a cancel will be attempted. In the event a response is received at anytime during a wait cycle, the response will be returned as expected. If all of the attempts do not return a response, an error will be thrown and no further cancel attempts will be made.
+In the rare but possible event that a response from the server is not received, there is a new facility to attempt to reverse (cancel) a primary transaction. If the expected response is not received within the configured `requestTimeout` (default 30 seconds), the Apple Tap To Pay package will attempt a cancel. This will continue for a maximum of 3 times after the initial timeout, with the first wait period of `requestTimeout` and then 3 10 seconds wait periods. After each wait period, a cancel will be attempted. In the event a response is received at anytime during a wait cycle, the response will be returned as expected. If all of the attempts do not return a response, an error will be thrown and no further cancel attempts will be made.
 
 Timeout Reversals are implemented for:
 

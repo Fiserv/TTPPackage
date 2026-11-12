@@ -345,7 +345,7 @@ internal class FiservTTPServices {
         }
     }
 
-    internal func cancels(timeout: TimeInterval = 30.0,
+    internal func cancels(timeout: TimeInterval? = nil,
                           clientRequestId: String,
                           amountRequest: Models.AmountRequest,
                           referenceTransactionDetailsRequest: Models.ReferenceTransactionDetailsRequest) async -> Result<Models.CommerceHubResponse, FiservTTPRequestError> {
@@ -682,7 +682,7 @@ internal class FiservTTPServices {
         return encoded
     }
     
-    internal func sendRequest<T: Decodable>(timeout: TimeInterval = 30.0,
+    internal func sendRequest<T: Decodable>(timeout: TimeInterval? = nil,
                                             clientRequestId: String,
                                             endpoint: FiservTTPEndpoint,
                                             httpBody: Data?,
@@ -733,6 +733,7 @@ internal class FiservTTPServices {
                                                            timestamp: timestamp)
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         // URL SESSION CONFIGURATION
+        let timeout = timeout ?? config.requestTimeout
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest  = timeout          // Timeout in seconds to reach server
         configuration.timeoutIntervalForResource = timeout          // Timeout in seconds to receive a response
