@@ -128,7 +128,13 @@ public class FiservTTPCardReader {
     
     private let services: FiservTTPServices
     
-    private var fiservTTPReader: FiservTTPReader
+    // FiservTTPReader is only available on iOS 18+, and stored properties cannot be marked @available
+    private var fiservTTPReaderStorage: AnyObject?
+    
+    @available(iOS 18, *)
+    private var fiservTTPReader: FiservTTPReader {
+        fiservTTPReaderStorage as! FiservTTPReader
+    }
     
     private let pathMonitor = NWPathMonitor()
     private let pathMonitorQueue = DispatchQueue(label: "NWPathMonitor")
@@ -159,7 +165,9 @@ public class FiservTTPCardReader {
     ///
     public init(configuration: FiservTTPConfig) {
         self.configuration = configuration
-        self.fiservTTPReader = FiservTTPReader(config: configuration)
+        if #available(iOS 18, *) {
+            self.fiservTTPReaderStorage = FiservTTPReader(config: configuration)
+        }
         self.services = FiservTTPServices(config: configuration)
         
         self.pathMonitor.pathUpdateHandler = { [weak self] path in
@@ -228,10 +236,13 @@ public class FiservTTPCardReader {
     ///
     /// - Important: Never call `finalize()`, this will potentially require an app restart and is provided here for completeness
     public func finalize() {
-        self.fiservTTPReader.finalize()
+        if #available(iOS 18, *) {
+            self.fiservTTPReader.finalize()
+        }
     }
     
     public func readerIsSupported() -> Bool {
+        guard #available(iOS 18, *) else { return false }
         return self.fiservTTPReader.readerIsSupported()
     }
     
@@ -289,6 +300,7 @@ public class FiservTTPCardReader {
     ///
     /// - Throws: An error of type FiservTTPCardReaderError
     ///
+    @available(iOS 18, *)
     public func isAccountLinked() async throws -> Bool {
         
         if let token = self.token {
@@ -312,6 +324,7 @@ public class FiservTTPCardReader {
     ///
     /// - Throws: An error of type FiservTTPCardReaderError
     ///
+    @available(iOS 18, *)
     public func linkAccount() async throws {
         
         if let token = self.token {
@@ -332,6 +345,7 @@ public class FiservTTPCardReader {
     ///
     /// - Throws: An error of type FiservTTPCardReaderError
     ///
+    @available(iOS 18, *)
     public func initializeSession() async throws {
             
         if self.token != nil {
@@ -378,12 +392,14 @@ public class FiservTTPCardReader {
     ///
     /// - Throws: An error of type FiservTTPCardReaderError
     ///
+    @available(iOS 18, *)
     public func validateCard() async throws -> FiservTTPValidateCardResponse {
         return try await withExclusiveTransaction {
             try await self.validateCardImpl()
         }
     }
     
+    @available(iOS 18, *)
     private func validateCardImpl() async throws -> FiservTTPValidateCardResponse {
         
         let title = "Validate Payment Card"
@@ -411,6 +427,7 @@ public class FiservTTPCardReader {
     ///
     /// - SeeAlso: [Commerce Hub Verification](https://developer.fiserv.com/product/CommerceHub/api/?type=post&path=/payments-vas/v1/accounts/verification)
     ///
+    @available(iOS 18, *)
     public func accountVerification(clientRequestId: String,
                                     transactionDetailsRequest: Models.TransactionDetailsRequest,
                                     paymentTokenSourceRequest: Models.PaymentTokenSourceRequest? = nil,
@@ -423,6 +440,7 @@ public class FiservTTPCardReader {
         }
     }
     
+    @available(iOS 18, *)
     private func accountVerificationImpl(clientRequestId: String,
                                     transactionDetailsRequest: Models.TransactionDetailsRequest,
                                     paymentTokenSourceRequest: Models.PaymentTokenSourceRequest? = nil,
@@ -508,6 +526,7 @@ public class FiservTTPCardReader {
     ///
     /// - SeeAlso: [Commerce Hub Tokenization](https://developer.fiserv.com/product/CommerceHub/api/?type=post&path=/payments-vas/v1/tokens)
     ///
+    @available(iOS 18, *)
     public func tokenizeCard(clientRequestId: String,
                              transactionDetailsRequest: Models.TransactionDetailsRequest) async throws -> Models.TokenizeCardResponse {
         return try await withExclusiveTransaction {
@@ -516,6 +535,7 @@ public class FiservTTPCardReader {
         }
     }
     
+    @available(iOS 18, *)
     private func tokenizeCardImpl(clientRequestId: String,
                              transactionDetailsRequest: Models.TransactionDetailsRequest) async throws -> Models.TokenizeCardResponse {
         
@@ -688,8 +708,6 @@ public class FiservTTPCardReader {
         
         let title = "Charges"
         
-        var cardReadResult: PaymentCardReadResult?
-        
         var cardVerificationResponse: Models.CardVerificationResponse?
         
         var paymentTokenChargeRequest: Models.PaymentTokenChargeRequest?
@@ -743,6 +761,13 @@ public class FiservTTPCardReader {
         
         // [AUTH (No Token), SALE] -> REQUIRES CARD READ
         if requiresCardRead {
+            
+            guard #available(iOS 18, *) else {
+                throw FiservTTPCardReaderError(title: title,
+                                               localizedDescription: NSLocalizedString("Tap to Pay on iPhone requires iOS 18 or later.", comment: ""))
+            }
+            
+            var cardReadResult: PaymentCardReadResult?
             
             // 1) CONFIRM CARD READER IDENTIFIER
             guard let readerIdentifier = try await self.fiservTTPReader.readerIdentifier() else {
@@ -957,8 +982,6 @@ public class FiservTTPCardReader {
         
         let title = "Refunds Transaction"
         
-        var cardReadResult: PaymentCardReadResult?
-        
         var cardVerificationResponse: Models.CardVerificationResponse?
         
         let requiresCardRead = (refundTransactionType != .matched)
@@ -985,6 +1008,13 @@ public class FiservTTPCardReader {
         }
         
         if requiresCardRead {
+            
+            guard #available(iOS 18, *) else {
+                throw FiservTTPCardReaderError(title: title,
+                                               localizedDescription: NSLocalizedString("Tap to Pay on iPhone requires iOS 18 or later.", comment: ""))
+            }
+            
+            var cardReadResult: PaymentCardReadResult?
             
             // 1) CONFIRM CARD READER IDENTIFIER
             guard let readerIdentifier = try await self.fiservTTPReader.readerIdentifier() else {
@@ -1166,7 +1196,7 @@ public class FiservTTPCardReader {
                 
                 self.transactionStatusSubject.send(status)
                 
-                try? await Task.sleep(for: .seconds(10))
+                try? await Task.sleep(nanoseconds: 10_000_000_000)
             }
         }
         

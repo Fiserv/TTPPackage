@@ -23,6 +23,7 @@
 import Foundation
 import ProximityReader
 
+@available(iOS 18, *)
 internal class FiservTTPReader {
     
     private var paymentCardReader: PaymentCardReader?

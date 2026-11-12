@@ -9,7 +9,7 @@ Pod::Spec.new do |s|
   s.source = { :git => 'https://github.com/Fiserv/TTPPackage.git', :tag => s.version }
   s.documentation_url = 'https://github.com/Fiserv/TTPPackage'
 
-  s.ios.deployment_target = '18.0'
+  s.ios.deployment_target = '15.0'
 
   s.swift_versions = ['5']
 
