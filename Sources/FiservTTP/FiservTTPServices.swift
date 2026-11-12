@@ -87,7 +87,18 @@ struct FiservTTPRequestError: Error {
 extension FiservTTPRequestError: LocalizedError {
 
     public var errorDescription: String? {
-        return NSLocalizedString(errorMessage, comment: "")
+        let message = NSLocalizedString(errorMessage, comment: "")
+        // Include the server's explanation from a Commerce Hub error body, e.g. "Bad Request. Invalid transaction (104)".
+        guard let body = failureReason,
+              let serverError = try? JSONDecoder().decode(FiservTTPServerError.self, from: Data(body.utf8)),
+              let error = serverError.error?.first,
+              let detail = error.message else {
+            return message
+        }
+        guard let code = error.code else {
+            return "\(message) \(detail)"
+        }
+        return "\(message) \(detail) (\(code))"
     }
 }
 
