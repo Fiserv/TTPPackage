@@ -19,6 +19,8 @@ Apple Tap to Pay on iPhone requires iPhone XS or later.
 | Credit                       | iOS 18.x (absolute minimum version as of September 2025)                           |
 | Debit                        | iOS 18.x (absolute minimum version as of September 2025)                           |
 
+The Package itself can be linked by apps with a deployment target of iOS 15 or later.  The Tap to Pay APIs (`linkAccount`, `isAccountLinked`, `initializeSession`, `validateCard`, `accountVerification` and `tokenizeCard`) are marked `@available(iOS 18, *)`, and a `charges` or `refunds` call that needs a card read throws a `FiservTTPCardReaderError` below iOS 18.  Matched refunds, cancels, transaction inquiry, capture and payment-token charges do not read a card and work on iOS 15 or later.
+
 
 ### Tap to Pay Entitlement
 You must request a special entitlement from Apple to enable Tap To Pay.  Log-into your Apple Developer Account and then [click here](https://developer.apple.com/contact/request/tap-to-pay-on-iphone) to request the entitlement.  In the text box titled 'PSP, enter 'Fiserv' as the value.
