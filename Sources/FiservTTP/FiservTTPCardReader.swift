@@ -145,6 +145,21 @@ public class FiservTTPCardReader {
     
     public var transactionStatusSubject: PassthroughSubject<PaymentTransactionStatus, Never> = .init()
     
+    /// An optional observer that is told about every Commerce Hub request this reader sends, and its outcome.
+    ///
+    /// Use it to log API traffic for support and dispute investigation. The reader holds the observer weakly,
+    /// so keep a strong reference to it elsewhere.
+    ///
+    /// - Important: Requests include the `Api-Key` and `Authorization` headers. Redact them before persisting logs.
+    ///
+    /// - SeeAlso: `FiservTTPRequestObserver`
+    ///
+    public weak var requestObserver: FiservTTPRequestObserver? {
+        didSet {
+            self.services.requestObserver = requestObserver
+        }
+    }
+
     /// Creates an instance of FiservTTPCardReader
     ///
     /// This class should be created and owned by your view model. All necessary functions needed to initialize a Tap To Pay Session

@@ -226,6 +226,8 @@ internal class FiservTTPServices {
     private let config: FiservTTPConfig
     private let sourceTypeName = "AppleTapToPay"
     
+    internal weak var requestObserver: FiservTTPRequestObserver?
+
     internal init(config: FiservTTPConfig) {
         
         self.app_version = "1.0.8"
@@ -740,9 +742,14 @@ internal class FiservTTPServices {
         let session = URLSession(configuration: configuration)      // Set values
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         
+        requestObserver?.fiservTTP(willSend: request)
+
         do {
             
             let (data, response) = try await session.data(for: request)
+
+            requestObserver?.fiservTTP(didComplete: request, response: response, data: data, error: nil)
+
             guard let response = response as? HTTPURLResponse else {
                 return .failure(FiservTTPRequestError(message: "No Response", code: URLError.cannotParseResponse.rawValue))
             }
@@ -771,6 +778,7 @@ internal class FiservTTPServices {
                 return .failure(evaluateHttpStatusCode(statusCode: response.statusCode, data: data))
             }
         } catch let error as URLError {
+            requestObserver?.fiservTTP(didComplete: request, response: nil, data: nil, error: error)
             switch error.code {
             case .timedOut:
                 return .failure(FiservTTPRequestError(message: "Request timed out", code: error.code.rawValue, failureReason: error.localizedDescription))
@@ -782,6 +790,7 @@ internal class FiservTTPServices {
                 return .failure(FiservTTPRequestError(message: "Network error", code: error.code.rawValue, failureReason: error.localizedDescription))
             }
         } catch {
+            requestObserver?.fiservTTP(didComplete: request, response: nil, data: nil, error: error)
             return .failure(FiservTTPRequestError(message: "Unknown Error", code: -1, failureReason: error.localizedDescription))
         }
     }
