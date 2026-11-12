@@ -76,7 +76,6 @@ public struct Models {
         public let captureFlag: Bool
         public let createToken: Bool
         public let tokenProvider: String?
-        public let cardConnectSite: String?
         public let cardConnectEnv: String?
 
         public init(merchantTransactionId: String? = nil,
@@ -85,7 +84,6 @@ public struct Models {
             captureFlag: Bool = false,
             createToken: Bool = false,
             tokenProvider: String? = nil,
-            cardConnectSite: String? = nil,
             cardConnectEnv: String? = nil) {
             self.merchantTransactionId = merchantTransactionId
             self.merchantOrderId = merchantOrderId
@@ -93,15 +91,13 @@ public struct Models {
             self.captureFlag = captureFlag
             self.createToken = createToken
             self.tokenProvider = tokenProvider
-            self.cardConnectSite = cardConnectSite
             self.cardConnectEnv = cardConnectEnv
         }
 
         /// True only when both cardConnectSite and cardConnectEnv are non-nil and non-empty.
         var isCardConnectEnabled: Bool {
-            let site = cardConnectSite?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             let env = cardConnectEnv?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            return !site.isEmpty && !env.isEmpty
+            return !env.isEmpty
         }
 
         var isValid: Bool {

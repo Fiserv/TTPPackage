@@ -475,7 +475,6 @@ internal class FiservTTPServices {
         let tokenizeRequest: Models.TokenizeCardRequest
 
         if transactionDetails.isCardConnectEnabled,
-           let cardConnectSite = transactionDetails.cardConnectSite,
            let cardConnectEnv = transactionDetails.cardConnectEnv {
             let merchantDetails = Models.MerchantDetailsRequest(merchantId: self.config.merchantId, terminalId: "")
             let tokenizeTransactionDetails = Models.TransactionDetailsRequest(merchantTransactionId: transactionDetails.merchantTransactionId,
@@ -484,7 +483,6 @@ internal class FiservTTPServices {
                 captureFlag: transactionDetails.captureFlag,
                 createToken: transactionDetails.createToken,
                 tokenProvider: "CARDSECURE",
-                cardConnectSite: nil,
                 cardConnectEnv: nil)
 
             let transactionInteractionRequest = Models.TransactionInteractionRequest(origin: "POS",
@@ -492,7 +490,7 @@ internal class FiservTTPServices {
                 posConditionCode: "CARD_PRESENT",
                 additionalPosInformation: nil)
 
-            let tokenizeMetadata = [Models.MetadataRequest(key: cardConnectSite, value: cardConnectEnv)]
+            let tokenizeMetadata = [Models.MetadataRequest(key: "SITE", value: cardConnectEnv)]
 
             tokenizeRequest = Models.TokenizeCardRequest(source: source,
                 transactionDetails: tokenizeTransactionDetails,
