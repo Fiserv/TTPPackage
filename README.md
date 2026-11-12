@@ -598,6 +598,42 @@ Task {
 
 **NOTE:** the createToken field in the TransactionDetailsRequest does not need to be explicitly set to true.
 
+##### Tokenization with CardConnect (CardSecure)
+
+`TransactionDetailsRequest` accepts two optional fields used only for CardConnect tokenization:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `cardConnectSite` | `String?` | CardConnect site. Sent as the metadata `key`. |
+| `cardConnectEnv` | `String?` | CardConnect environment. Sent as the metadata `value`. |
+
+CardConnect tokenization is enabled **only when both fields are provided and non-empty** (whitespace is ignored). If either is `nil` or empty, the fields are ignored and the standard tokenization flow is used.
+
+```Swift
+let transactionDetailsRequest = Models.TransactionDetailsRequest(
+    merchantTransactionId: merchantTransactionId,
+    merchantOrderId: merchantOrderId,
+    merchantInvoiceNumber: merchantInvoiceNumber,
+    cardConnectSite: "<CardConnect site>", // Optional
+    cardConnectEnv: "<CardConnect env>"    // Optional
+)
+
+let response = try await self.fiservTTPCardReader.tokenizeCard(
+    clientRequestId: clientRequestId,
+    transactionDetailsRequest: transactionDetailsRequest
+)
+```
+
+When CardConnect is enabled, the SDK automatically modifies the Tokenize request:
+
+- `transactionDetails.tokenProvider` is set to `CARDSECURE` (`cardConnectSite`/`cardConnectEnv` are not sent in `transactionDetails`).
+- `merchantDetails` is sent with the configured `merchantId` and an empty `terminalId`.
+- `transactionInteraction` is added with `origin: "POS"`, `posEntryMode: "07"`, `posConditionCode: "CARD_PRESENT"`.
+- `metadata` is added as `[{ "key": cardConnectSite, "value": cardConnectEnv }]`.
+- The following HTTP headers are added:
+  - `X-Caller-Source: CARD_POINTE`
+  - `X-Originator: COMMERCEHUB_CARDSECURE`
+
 Additional information can be found here:
 [Commerce Hub Tokenization](https://developer.fiserv.com/product/CommerceHub/docs/?path=docs/Resources/Guides/Payment-Sources/Tokenization/TransAmor.md&branch=main)
 

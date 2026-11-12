@@ -75,19 +75,35 @@ public struct Models {
         public let merchantInvoiceNumber: String?
         public let captureFlag: Bool
         public let createToken: Bool
-        
+        public let tokenProvider: String?
+        public let cardConnectSite: String?
+        public let cardConnectEnv: String?
+
         public init(merchantTransactionId: String? = nil,
-                    merchantOrderId: String? = nil,
-                    merchantInvoiceNumber: String? = nil,
-                    captureFlag: Bool = false,
-                    createToken: Bool = false) {
+            merchantOrderId: String? = nil,
+            merchantInvoiceNumber: String? = nil,
+            captureFlag: Bool = false,
+            createToken: Bool = false,
+            tokenProvider: String? = nil,
+            cardConnectSite: String? = nil,
+            cardConnectEnv: String? = nil) {
             self.merchantTransactionId = merchantTransactionId
             self.merchantOrderId = merchantOrderId
             self.merchantInvoiceNumber = merchantInvoiceNumber
             self.captureFlag = captureFlag
             self.createToken = createToken
+            self.tokenProvider = tokenProvider
+            self.cardConnectSite = cardConnectSite
+            self.cardConnectEnv = cardConnectEnv
         }
-        
+
+        /// True only when both cardConnectSite and cardConnectEnv are non-nil and non-empty.
+        var isCardConnectEnabled: Bool {
+            let site = cardConnectSite?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let env = cardConnectEnv?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return !site.isEmpty && !env.isEmpty
+        }
+
         var isValid: Bool {
             let fields = [merchantTransactionId, merchantOrderId, merchantInvoiceNumber]
             return fields.contains { field in
@@ -427,24 +443,40 @@ public struct Models {
         
         public let error: ServerErrorResponse?
     }
-    
+
+    public struct MetadataRequest: Codable {
+        public let key: String
+        public let value: String
+
+        public init(key: String, value: String) {
+            self.key = key
+            self.value = value
+        }
+    }
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     // TOKENIZE REQUEST
-    
+
+
+
     public struct TokenizeCardRequest: Codable {
         public let source: SourceRequest
         public let transactionDetails: TransactionDetailsRequest
         public let merchantDetails: MerchantDetailsRequest
-        
+        public let transactionInteraction: TransactionInteractionRequest?
+        public let metadata: [MetadataRequest]?
+
         public init(source: SourceRequest,
-                    transactionDetails: TransactionDetailsRequest,
-                    merchantDetails: MerchantDetailsRequest) {
-            
-            self.source = source
-            self.transactionDetails = transactionDetails
-            self.merchantDetails = merchantDetails
+            transactionDetails: TransactionDetailsRequest,
+            merchantDetails: MerchantDetailsRequest,
+            transactionInteraction: TransactionInteractionRequest? = nil,
+            metadata: [MetadataRequest]? = nil) {
+                self.source = source
+                self.transactionDetails = transactionDetails
+                self.merchantDetails = merchantDetails
+                self.transactionInteraction = transactionInteraction
+                self.metadata = metadata
+            }
         }
-    }
     
     // TOKENIZE RESPONSE
     

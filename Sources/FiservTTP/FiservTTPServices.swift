@@ -152,6 +152,8 @@ internal struct FiservTTPEndpoint {
     var method: FiservTTPRequestMethod {
         return fsmethod
     }
+    /// When true, CardConnect/CardSecure headers are added (set only for Tokenize).
+    internal var cardConnectFlag: Bool = false
 }
 
 extension FiservTTPEndpoint {
@@ -159,6 +161,11 @@ extension FiservTTPEndpoint {
     internal func httpHeaders(requestBody: String, clientRequestId: String, timestamp: Int64) -> [String : String] {
         
         var headers = commonHttpHeaders(clientRequestId: clientRequestId, timestamp: timestamp)
+
+        if cardConnectFlag {
+            headers["X-Caller-Source"] = "CARD_POINTE"
+            headers["X-Originator"] = "COMMERCEHUB_CARDSECURE"
+        }
         
         if let authHeaderValue = authHeaderValue(requestBody: requestBody,
                                                  clientRequestId: clientRequestId,
@@ -210,9 +217,8 @@ extension FiservTTPEndpoint {
 // SERVICES
 
 internal class FiservTTPServices {
-    
     private let accountVerificationEndpoint: FiservTTPEndpoint
-    private let tokenizeEndpoint: FiservTTPEndpoint
+    private var tokenizeEndpoint: FiservTTPEndpoint
     private let tokenEndpoint: FiservTTPEndpoint
     private var chargeEndpoint: FiservTTPEndpoint
     private var inquiryEndpoint: FiservTTPEndpoint
@@ -228,7 +234,7 @@ internal class FiservTTPServices {
     
     internal init(config: FiservTTPConfig) {
         
-        self.app_version = "1.0.8"
+        self.app_version = "1.0.9"
         
         self.config = config
         
@@ -300,6 +306,7 @@ internal class FiservTTPServices {
                            transationDetails: Models.TransactionDetailsRequest,
                            cardVerificationResponse: Models.CardVerificationResponse) async -> Result<Models.TokenizeCardResponse, FiservTTPRequestError> {
 
+        tokenizeEndpoint.cardConnectFlag = transationDetails.isCardConnectEnabled
         return await sendRequest(clientRequestId: clientRequestId,
                                  endpoint: tokenizeEndpoint,
                                  httpBody: bodyForTokenizeRequest(transactionDetails: transationDetails,
@@ -464,12 +471,42 @@ internal class FiservTTPServices {
                                           cardReaderId: paymentCardReaderId,
                                           cardReaderTransactionId: cardReaderTransactionId,
                                           appleTtpMerchantId: self.config.appleTtpMerchantId)
-        
-        let merchantDetails = Models.MerchantDetailsRequest(merchantId: self.config.merchantId, terminalId: self.config.terminalId)
-     
-        let tokenizeRequest = Models.TokenizeCardRequest(source: source,
-                                                         transactionDetails: transactionDetails,
-                                                         merchantDetails: merchantDetails)
+
+        let tokenizeRequest: Models.TokenizeCardRequest
+
+        if transactionDetails.isCardConnectEnabled,
+           let cardConnectSite = transactionDetails.cardConnectSite,
+           let cardConnectEnv = transactionDetails.cardConnectEnv {
+            let merchantDetails = Models.MerchantDetailsRequest(merchantId: self.config.merchantId, terminalId: "")
+            let tokenizeTransactionDetails = Models.TransactionDetailsRequest(merchantTransactionId: transactionDetails.merchantTransactionId,
+                merchantOrderId: transactionDetails.merchantOrderId,
+                merchantInvoiceNumber: transactionDetails.merchantInvoiceNumber,
+                captureFlag: transactionDetails.captureFlag,
+                createToken: transactionDetails.createToken,
+                tokenProvider: "CARDSECURE",
+                cardConnectSite: nil,
+                cardConnectEnv: nil)
+
+            let transactionInteractionRequest = Models.TransactionInteractionRequest(origin: "POS",
+                posEntryMode: "07",
+                posConditionCode: "CARD_PRESENT",
+                additionalPosInformation: nil)
+
+            let tokenizeMetadata = [Models.MetadataRequest(key: cardConnectSite, value: cardConnectEnv)]
+
+            tokenizeRequest = Models.TokenizeCardRequest(source: source,
+                transactionDetails: tokenizeTransactionDetails,
+                merchantDetails: merchantDetails,
+                transactionInteraction: transactionInteractionRequest,
+                metadata: tokenizeMetadata)
+
+        } else {
+            let merchantDetails = Models.MerchantDetailsRequest(merchantId: self.config.merchantId, terminalId: self.config.terminalId)
+
+            tokenizeRequest = Models.TokenizeCardRequest(source: source,
+                transactionDetails: transactionDetails,
+                merchantDetails: merchantDetails)
+        }
 
         let jsonEncoder = JSONEncoder()
 
