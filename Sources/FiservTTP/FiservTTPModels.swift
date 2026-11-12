@@ -78,6 +78,7 @@ public struct FiservTTPConfig {
     public let merchantCategoryCode: String
     public let terminalId: String
     public let terminalProfileId: String
+    public let requestTimeout: TimeInterval
 
     /**
      Primary Configuration used for all requests
@@ -92,6 +93,9 @@ public struct FiservTTPConfig {
      - parameter merchantCategoryCode:  Your MerchantId Category Code
      - parameter terminalId:            Your TerminalId
      - parameter terminalProfileId:     Your Terminal Profile Id
+     - parameter requestTimeout:        Timeout in seconds for Commerce Hub requests (Optional, defaults to 30).
+                                        Also determines how long a charge or refund waits for a response before
+                                        the automatic timeout reversal is started. Values of 0 or less use the default.
      
      - returns: FiservTTPConfig struct that will be used throughout the app lifecycle
      */
@@ -104,7 +108,9 @@ public struct FiservTTPConfig {
                 merchantName: String,
                 merchantCategoryCode: String,
                 terminalId: String,
-                terminalProfileId: String) {
+                terminalProfileId: String,
+                requestTimeout: TimeInterval = 30.0) {
+
         
         self.secretKey = secretKey
         self.apiKey = apiKey
@@ -116,6 +122,7 @@ public struct FiservTTPConfig {
         self.merchantCategoryCode = merchantCategoryCode
         self.terminalId = terminalId
         self.terminalProfileId = terminalProfileId
+        self.requestTimeout = requestTimeout > 0 ? requestTimeout : 30.0
     }
 }
 
