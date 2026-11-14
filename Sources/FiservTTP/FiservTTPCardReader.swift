@@ -291,9 +291,18 @@ public class FiservTTPCardReader {
     ///
     public func isAccountLinked() async throws -> Bool {
         
+        if self.token != nil {
+            try await refreshTokenIfNeeded()
+        }
+        
         if let token = self.token {
             
-            return try await self.fiservTTPReader.isAccountLinked(token: token)
+            do {
+                return try await self.fiservTTPReader.isAccountLinked(token: token)
+            } catch {
+                expireToken()
+                throw error
+            }
             
         } else {
             
@@ -314,14 +323,40 @@ public class FiservTTPCardReader {
     ///
     public func linkAccount() async throws {
         
+        if self.token != nil {
+            try await refreshTokenIfNeeded()
+        }
+        
         if let token = self.token {
             
-            try await self.fiservTTPReader.linkAccount(token: token)
+            do {
+                try await self.fiservTTPReader.linkAccount(token: token)
+            } catch {
+                expireToken()
+                throw error
+            }
             
         } else {
             
             throw FiservTTPCardReaderError(title: "Missing Token",
                                            localizedDescription: NSLocalizedString("Unable to link this account, a token is required.", comment: ""))
+        }
+    }
+    
+    // A failed Tap to Pay step may mean the token was rejected. Marking it expired makes the next
+    // isAccountLinked(), linkAccount() or initializeSession() request a new token instead of retrying the same one.
+    private func expireToken() {
+        self.tokenExp = 0
+    }
+    
+    // Requests a new token when the current one expires within 30 minutes or was marked expired after a failure.
+    private func refreshTokenIfNeeded() async throws {
+        
+        let timestamp = Date().timeIntervalSince1970
+        
+        if self.tokenExp - timestamp < 1800 { // 30 minutes
+            
+            try await requestSessionToken(clientRequestId: UUID().uuidString)   // Auto Refresh
         }
     }
     
@@ -339,12 +374,7 @@ public class FiservTTPCardReader {
             // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             // Check CommerceHub Token Expiration
             // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-            let timestamp = Date().timeIntervalSince1970
-            
-            if self.tokenExp - timestamp < 1800 { // 30 minutes
-                
-                try await requestSessionToken(clientRequestId: UUID().uuidString)   // Auto Refresh
-            }
+            try await refreshTokenIfNeeded()
             
         } else {
             
@@ -354,12 +384,17 @@ public class FiservTTPCardReader {
         
         if let token = self.token {
             
-            try await self.fiservTTPReader.initializeSession(token: token, eventHandler: { event in
-                
-                if event == "notReady" {
-                    self.sessionReadySubject.send(false)
-                }
-            })
+            do {
+                try await self.fiservTTPReader.initializeSession(token: token, eventHandler: { event in
+                    
+                    if event == "notReady" {
+                        self.sessionReadySubject.send(false)
+                    }
+                })
+            } catch {
+                expireToken()
+                throw error
+            }
             
             self.sessionReadySubject.send(true)
             
